@@ -121,82 +121,13 @@ class BillingActivity:
 			return
 		
 		joined = self.data.join(billingRates.data.set_index('EmployeeID'), on='Number', how='left', rsuffix='_rates')
-		print(joined.info())
+		joined.drop(columns=['TcpName'], inplace=True)
+		joined['Rate'] = np.where(joined['RateType'] == 'Overtime', joined['BillRateOT'], joined['BillRateReg'])
+		joined['Description'] = np.where(joined['RateType'] == 'Overtime', '(Overtime)', joined['Category'])
 
 		# reorder the columns to be more useful
-		joined.drop(columns=['TcpName'], inplace=True)
-
-		joined = joined[['Date', 'CLIN', 'SubCLIN', 'Category', 'EmployeeName', 'Number', 'TaskID', 'TaskName', 'Hours', 'RateType', 'HourlyRateReg', 'HourlyRateOT', 'BillRateReg', 'BillRateOT', 'EffectiveDate', 'PostingRate', 'HazardRate']]
-
-		joined.sort_values(['Date', 'TaskID', 'SubCLIN'], ascending=[True, True, True], inplace=True)
+		joined = joined[['Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Description', 'EmployeeName', 'TaskID', 'TaskName', 'Hours', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate']]
 		self.data = joined
-
-	def byDate(self, fullDetail=False, verbose=False):
-		df = self.data.copy()
-
-		grouped = df.groupby(['Date', 'Number', 'TaskName'], as_index=False).agg({'TcpName': 'first', 'Hours': 'sum'})
-		pivot = grouped.pivot_table(index=['Date', 'TcpName', 'Number'], columns='TaskName', values='Hours').reset_index()
-		pivot.sort_values(['Date', 'TcpName'], ascending=[True, True], inplace=True)
-
-		for taskName in TaskNames.values():
-			if taskName not in pivot.columns:
-				pivot[taskName] = 0
-			else:
-				pivot[taskName] = pivot[taskName].fillna(0)
-
-		pivot['HoursRegular'] = pivot['Regular'] + pivot['LocalHoliday'] + pivot['Holiday'] + pivot['Vacation'] + pivot['Admin'] + pivot['Bereavement']
-		pivot['HoursOvertime'] = pivot['Overtime'] + pivot['On-callOT'] + pivot['ScheduledOT'] + pivot['UnscheduledOT']
-		pivot['HoursTotal'] = pivot['HoursRegular'] + pivot['HoursOvertime']
-
-		if not fullDetail:
-			pivot.drop(columns=['Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT'], inplace=True)
-
-		if verbose:
-			print(f'\n--- By Date:')
-			print(pivot)
-		
-		return pivot
-
-	def byEmployee(self, fullDetail=False, verbose=False):
-		df = self.data.copy()
-
-		grouped = df.groupby(['Number', 'Date', 'TaskName'], as_index=False).agg({'TcpName': 'first', 'Hours': 'sum'})
-		pivot = grouped.pivot_table(index=['Date', 'TcpName', 'Number'], columns='TaskName', values='Hours').reset_index()
-		pivot.sort_values(['TcpName'], ascending=[True], inplace=True)
-
-		for taskName in TaskNames.values():
-			if taskName not in pivot.columns:
-				pivot[taskName] = 0
-			else:
-				pivot[taskName] = pivot[taskName].fillna(0)
-
-		pivot['HoursReg'] = pivot['Regular'] + pivot['LocalHoliday'] + pivot['Holiday'] + pivot['Vacation'] + pivot['Admin'] + pivot['Bereavement']
-		pivot['HoursOT'] = pivot['Overtime'] + pivot['On-callOT'] + pivot['ScheduledOT'] + pivot['UnscheduledOT']
-		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
-
-		pivot = pivot[['Date', 'TcpName', 'Number', 'Regular','Admin', 'Holiday', 'LocalHoliday', 'Vacation', 'Bereavement', 'HoursReg', 'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 'HoursOT', 'HoursTotal']]
-
-		if not fullDetail:
-			pivot.drop(columns=['Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT'], inplace=True)
-
-		if verbose:
-			print(f'\n--- By Employee:')
-			print(pivot)
-
-		return pivot
-	
-	def byRate(self, verbose=False):
-		df = self.data.copy()
-		df.drop(columns=['TaskID', 'TaskName'], inplace=True)
-		df = df[['Date', 'TcpName', 'Number', 'RateType', 'Hours']]
-		grouped = df.groupby(['TcpName', 'Date', 'RateType'], as_index=False).agg({'Number': 'first', 'Hours': 'sum'})
-		grouped = grouped[['Date', 'TcpName', 'Number', 'RateType', 'Hours']] # reorder columns
-
-		if verbose:
-			print(f'\n--- By Rate:')
-			print(grouped)
-
-		return grouped
 
 	def isIn(self, employeeNumberList):
 		records = self.data.loc[(self.data['Number'].isin(employeeNumberList))]
@@ -208,6 +139,34 @@ class BillingActivity:
 	
 	def startMonth(self):
 		return self.dateStart.month
+	
+	def locationsByCLIN(self):
+		result = {}
+		for clin in self.data['CLIN'].unique():
+			clinData = self.data.loc[self.data['CLIN'] == clin]
+
+			locations = []
+			for location in clinData['Location'].unique():
+				locations.append(location)
+
+			result[clin] = locations
+
+		return result
+
+	def groupedForInvoicing(self, clin=None, location=None):
+		invoiceDetail = activity.data
+
+		if clin is not None:
+			invoiceDetail = invoiceDetail.loc[invoiceDetail['CLIN'] == clin]
+
+		if location is not None:
+			invoiceDetail = invoiceDetail.loc[invoiceDetail['Location'] == location]
+
+		invoiceDetail = invoiceDetail.groupby(['SubCLIN', 'Description', 'EmployeeName', 'Rate'], as_index=False).agg({'Hours': 'sum'})
+		invoiceDetail['Amount'] = invoiceDetail['Hours'] * invoiceDetail['Rate']
+		invoiceDetail = invoiceDetail[['SubCLIN', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount']]
+		invoiceDetail.sort_values(['SubCLIN', 'EmployeeName', 'Description'], ascending=[True, True, False], inplace=True)
+		return invoiceDetail
 
 if __name__ == '__main__':
 	import sys
@@ -225,4 +184,18 @@ if __name__ == '__main__':
 
 	print(f'\nBilling Activity:')
 	print(f'Date range: {activity.dateStart} to {activity.dateEnd}')
-	print(activity.data)
+
+	print(f'\nGrouped for Invoicing:')
+	locationInfo = activity.locationsByCLIN()
+
+	for clin in locationInfo.keys():
+		print(f'\n\n------------------------------\nInvoices for CLIN: {clin}')
+
+		for location in locationInfo[clin]:
+			print(f'\nInvoice for: {location}')
+			data = activity.groupedForInvoicing(clin=clin, location=location)
+			print(data)
+
+			summary = pd.DataFrame(columns=['SubCLIN', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount'])
+			summary.loc[0] = ['', f'Totals for {location}', '', data['Hours'].sum(), '', data['Amount'].sum()]
+			print(summary)
