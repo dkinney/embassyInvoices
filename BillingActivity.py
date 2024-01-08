@@ -8,6 +8,9 @@ from xml.sax import ContentHandler, parse
 
 from BillingRates import BillingRates
 
+baseYear = '0'
+upchargeRate = 0.35
+
 TaskNames = {
 	'3322': 'Regular',
 	'3323': 'Overtime',
@@ -104,11 +107,13 @@ class BillingActivity:
 
 			df.drop(columns=['Select', 'InDate', 'InTime', 'OutDate', 'OutTime'], inplace=True)
 			df.sort_values(['Date', 'TcpName', 'TaskID'], ascending=[True, True, True], inplace=True)
-
-			self.data = df
-
+			
 			self.dateStart = pd.to_datetime(df['Date'].min(), errors="coerce")
 			self.dateEnd = pd.to_datetime(df['Date'].max(), errors="coerce")
+			self.data = df
+
+			billingRates = BillingRates(verbose=False)
+			self.joinWith(billingRates)
 
 			if verbose:
 				print(f'\nRaw data from {filename}')
@@ -122,12 +127,61 @@ class BillingActivity:
 		
 		joined = self.data.join(billingRates.data.set_index('EmployeeID'), on='Number', how='left', rsuffix='_rates')
 		joined.drop(columns=['TcpName'], inplace=True)
+
 		joined['Rate'] = np.where(joined['RateType'] == 'Overtime', joined['BillRateOT'], joined['BillRateReg'])
 		joined['Description'] = np.where(joined['RateType'] == 'Overtime', '(Overtime)', joined['Category'])
+		joined['SubCLIN'] = joined['SubCLIN'].str.replace('X', baseYear)
+
+		# joined['AmountReg'] = joined['HoursReg'] * joined['BillRateReg']
+		# joined['AmountOT'] = joined['HoursOT'] * joined['BillRateOT']
+		# joined['AmountTotal'] = joined['AmountReg'] + joined['AmountOT']
+		# joined['Wages'] = joined['HoursTotal'] * joined['HourlyRateReg']
+		# joined['PostBill'] = (joined['Wages'] * joined['Posting'])
+		# joined['HazardBill'] = (joined['Wages'] * joined['Hazard'])
 
 		# reorder the columns to be more useful
-		joined = joined[['Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Description', 'EmployeeName', 'TaskID', 'TaskName', 'Hours', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate']]
+		joined = joined[['Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'Description', 'EmployeeName', 'TaskID', 'TaskName', 'Hours', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate']]
 		self.data = joined
+
+	def details(self, clin=None):
+		df = self.data.copy()
+		
+		if clin is not None:
+			df = df.loc[df['CLIN'] == clin]
+
+		grouped = df.groupby(['Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 'TaskID', 'TaskName', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate'], as_index=False).agg({'Hours': 'sum'})
+
+		pivot = grouped.pivot_table(index=[
+			'Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 
+			'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate'
+		], columns='TaskName', values='Hours').reset_index()
+
+		pivot.sort_values(['EmployeeName'], ascending=[True], inplace=True)
+
+		for taskName in TaskNames.values():
+			if taskName not in pivot.columns:
+				pivot[taskName] = 0
+			else:
+				pivot[taskName] = pivot[taskName].fillna(0)
+
+		pivot['HoursReg'] = pivot['Regular'] + pivot['LocalHoliday'] + pivot['Holiday'] + pivot['Vacation'] + pivot['Admin'] + pivot['Bereavement']
+		pivot['HoursOT'] = pivot['Overtime'] + pivot['On-callOT'] + pivot['ScheduledOT'] + pivot['UnscheduledOT']
+		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
+		pivot['Wages'] = pivot['HoursReg'] * pivot['HourlyRateReg']
+		pivot['Posting'] = pivot['Wages'] * pivot['PostingRate']
+		pivot['Hazard'] = pivot['Wages'] * pivot['HazardRate']
+
+		pivot = pivot[[
+			'Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 
+			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
+			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
+			'HoursReg', 'HoursOT', 'HoursTotal',
+			'HourlyRateReg', 'Posting', 'Hazard'
+		]]
+
+		pivot.sort_values(['Date', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName'], inplace=True)
+
+		return pivot
 
 	def isIn(self, employeeNumberList):
 		records = self.data.loc[(self.data['Number'].isin(employeeNumberList))]
@@ -154,7 +208,7 @@ class BillingActivity:
 		return result
 
 	def groupedForInvoicing(self, clin=None, location=None):
-		invoiceDetail = activity.data
+		invoiceDetail = self.data
 
 		if clin is not None:
 			invoiceDetail = invoiceDetail.loc[invoiceDetail['CLIN'] == clin]
@@ -167,6 +221,36 @@ class BillingActivity:
 		invoiceDetail = invoiceDetail[['SubCLIN', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount']]
 		invoiceDetail.sort_values(['SubCLIN', 'EmployeeName', 'Description'], ascending=[True, True, False], inplace=True)
 		return invoiceDetail
+	
+	def groupedForCosts(self, clin=None):
+		costDetail = self.details()
+
+		if clin is not None:
+			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
+
+		posts = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Posting': 'sum'})
+		posts['CLIN'] = '207'
+		posts['Location'] = np.where(posts['Location'] == posts['City'], posts['Location'], posts['City'] + ', ' + posts['Location'])
+		posts['City'] = 'Post'
+		posts['G&A'] = posts['Posting'] * upchargeRate
+		posts['Total'] = posts['Posting'] + posts['G&A']
+		posts.rename(columns={'City': 'Type', 'Posting': 'Amount'}, inplace=True)
+		posts = posts[['CLIN', 'Location', 'Type', 'Amount', 'G&A', 'Total']]
+
+		hazards = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Hazard': 'sum'})
+		hazards['CLIN'] = '208'
+		hazards['Location'] = np.where(hazards['Location'] == hazards['City'], hazards['Location'], hazards['City'] + ', ' + hazards['Location'])
+		hazards['City'] = 'Hazard'
+		hazards['G&A'] = hazards['Hazard'] * upchargeRate
+		hazards['Total'] = hazards['Hazard'] + hazards['G&A']
+		hazards.rename(columns={'City': 'Type', 'Hazard': 'Amount'}, inplace=True)
+		hazards = hazards[['CLIN', 'Location', 'Type', 'Amount', 'G&A', 'Total']]
+
+		costs = pd.concat([posts, hazards])
+		costs = costs.loc[costs['Total'] > 0]
+		costs.sort_values(['Location', 'Type'], ascending=[True, False], inplace=True)
+
+		return costs
 
 if __name__ == '__main__':
 	import sys
@@ -180,22 +264,24 @@ if __name__ == '__main__':
 		exit()
 
 	activity = BillingActivity(activityFilename, verbose=False)
-	activity.joinWith(billingRates)
 
-	print(f'\nBilling Activity:')
+	print(f'\Invoice Details:')
 	print(f'Date range: {activity.dateStart} to {activity.dateEnd}')
 
-	print(f'\nGrouped for Invoicing:')
 	locationInfo = activity.locationsByCLIN()
+	print(f'LocationInfo: {locationInfo}\n')
 
 	for clin in locationInfo.keys():
-		print(f'\n\n------------------------------\nInvoices for CLIN: {clin}')
+		print(f'\nLabor Invoices for CLIN: {clin}')
 
 		for location in locationInfo[clin]:
-			print(f'\nInvoice for: {location}')
+			print(f'Invoice for: {location}')
 			data = activity.groupedForInvoicing(clin=clin, location=location)
-			print(data)
+			print('\n'.join(data.to_string(index=False).split('\n')[1:]))
 
-			summary = pd.DataFrame(columns=['SubCLIN', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount'])
-			summary.loc[0] = ['', f'Totals for {location}', '', data['Hours'].sum(), '', data['Amount'].sum()]
-			print(summary)
+		print(f'\nCost Invoices for CLIN: {clin}')
+		data = activity.groupedForCosts(clin=clin)
+		print('\n'.join(data.to_string(index=False).split('\n')[1:]))
+
+		print('\nDetails:')
+		print(activity.details(clin=clin))
