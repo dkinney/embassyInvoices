@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 
 from BillingActivity import BillingActivity
 from InvoiceStyles import styles
-from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatDetailTab
+from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatDetailTab, formatSummaryTab
 
 Regions = {
 	'001': 'Asia',
@@ -23,16 +23,16 @@ CountryCodes = {
 	'NATO': 'NATO'
 }
 
-if __name__ == '__main__':
-	import sys
+def processActivityFromFile(filename):
+	print(f'Processing activity from {filename}...')
 
-	activityFilename = sys.argv[1] if len(sys.argv) > 1 else None
+	invoiceSummary = []
 
-	if activityFilename is None:
+	if filename is None:
 		print(f'Usage: {sys.argv[0]} <billing activity file>')
-		exit()
+		return invoiceDetail
 
-	activity = BillingActivity(activityFilename, verbose=False)
+	activity = BillingActivity(filename, verbose=False)
 
 	startYear = activity.dateStart.strftime("%Y")
 	startMonth = activity.dateStart.strftime("%m")
@@ -70,14 +70,27 @@ if __name__ == '__main__':
 
 				summary.to_excel(writer, sheet_name=sheetName, startrow=summaryStartRow, startcol=0, header=False)
 
-				sheetInfo[sheetName] = {
-					'invoiceNumber': laborInvoiceNumber + CountryCodes[location],
+				invoiceNumber = laborInvoiceNumber + CountryCodes[location]
+				invoiceAmount = data['Amount'].sum()
+
+				startMonthName = activity.dateStart.strftime('%b')
+				endMonthName = activity.dateEnd.strftime('%b')
+				billingPeriod = f'{activity.dateStart.day} {startMonthName} {activity.dateStart.year} - {activity.dateEnd.day} {endMonthName} {activity.dateEnd.year}'
+
+				invoiceDetail = {
+					'description': f'{activity.dateStart.strftime("%B")} {startYear}',
+					'region': region,
+					'filename': outputFile,
+					'type': 'Labor',
+					'invoiceNumber': invoiceNumber,
 					'taskOrder': location,
-					'dateStart': activity.dateStart.strftime("%m/%d/%Y"),
-					'dateEnd': activity.dateEnd.strftime("%m/%d/%Y"),
-					'invoiceAmount': data['Amount'].sum(),
+					'billingPeriod': billingPeriod,
+					'invoiceAmount': invoiceAmount,
 					'rowsToSum': rowsToSum
 				}
+
+				sheetInfo[sheetName] = invoiceDetail
+				invoiceSummary.append(invoiceDetail)
 	
 		# Apply formatting in place
 		workbook = load_workbook(outputFile)
@@ -91,7 +104,6 @@ if __name__ == '__main__':
 			formatInvoiceTab(worksheet, info)
 
 		workbook.save(outputFile)
-		print(f'Invoices available at {outputFile}')
 
 		##########################################################
 		# Costs
@@ -119,15 +131,26 @@ if __name__ == '__main__':
 
 				# use the first character of the region to uniquely identify this invoice
 				uniqueRegion = region[0].upper()
+				invoiceNumber = costInvoiceNumber + uniqueRegion
 
-				sheetInfo[sheetName] = {
-					'invoiceNumber': costInvoiceNumber + uniqueRegion,
+				startMonthName = activity.dateStart.strftime('%b')
+				endMonthName = activity.dateEnd.strftime('%b')
+				billingPeriod = f'{activity.dateStart.day} {startMonthName} {activity.dateStart.year} - {activity.dateEnd.day} {endMonthName} {activity.dateEnd.year}'
+
+				invoiceDetail = {
+					'description': f'{activity.dateStart.strftime("%B")} {startYear}',
+					'region': region,
+					'filename': outputFile,
+					'type': 'Costs',
+					'invoiceNumber': invoiceNumber,
 					'taskOrder': f'ODC-{region}',
-					'dateStart': activity.dateStart.strftime("%m/%d/%Y"),
-					'dateEnd': activity.dateEnd.strftime("%m/%d/%Y"),
+					'billingPeriod': billingPeriod,
 					'invoiceAmount': invoiceAmount,
 					'rowsToSum': rowsToSum
 				}
+
+				sheetInfo[sheetName] = invoiceDetail
+				invoiceSummary.append(invoiceDetail)
 
 		# Apply formatting in place
 		workbook = load_workbook(outputFile)
@@ -141,7 +164,6 @@ if __name__ == '__main__':
 			formatCostsTab(worksheet, info)
 
 		workbook.save(outputFile)
-		print(f'Invoices available at {outputFile}')
 
 		##########################################################
 		# Details
@@ -166,3 +188,59 @@ if __name__ == '__main__':
 		worksheet = workbook[sheetName]
 		formatDetailTab(worksheet)
 		workbook.save(outputFile)
+	
+	return invoiceSummary
+
+def showResult(resultDictionary):
+	result = pd.DataFrame(resultDictionary)
+	result.drop(columns=['rowsToSum'], inplace=True)
+	print(result)
+
+if __name__ == '__main__':
+	import sys
+
+	processed = []
+
+	for filename in sys.argv[1:]:
+		result = processActivityFromFile(filename)
+		showResult(result)
+
+		for item in result:
+			processed.append(item)
+
+	invoices = pd.DataFrame(processed)
+
+	# Drop the rowsToSum column if it exists
+	if 'rowsToSum' in invoices.columns:
+		invoices.drop(columns=['rowsToSum'], inplace=True)
+
+	invoices.rename(columns={
+		'description': 'Description',
+		'region': 'Region',
+		'filename': 'Filename',
+		'type': 'Type',
+		'invoiceNumber': 'Invoice Number',
+		'taskOrder': 'Task Order',
+		'billingPeriod': 'Billing Period',
+		'invoiceAmount': 'Invoice Amount'
+	}, inplace=True)
+
+	print(invoices)
+
+	now = pd.Timestamp.now().strftime("%Y%m%d%H%M")
+
+	outputFile = f'Summary-{now}.xlsx'
+
+	with pd.ExcelWriter(outputFile) as writer:
+		invoices.to_excel(writer, sheet_name='Summary', startrow=0, startcol=0, header=True)
+
+	# Apply formatting in place
+	workbook = load_workbook(outputFile)
+
+	for styleName in styles.keys():
+			workbook.add_named_style(styles[styleName])
+		
+	worksheet = workbook['Summary']
+	formatSummaryTab(worksheet)
+	workbook.save(outputFile)
+	

@@ -213,6 +213,26 @@ dataStyles = {
         'width': 15,
         'style': 'currencyCell'
     },
+    'InvoiceNumber': {
+        'width': 20,
+        'style': 'defaultCell'
+    },
+    'TaskOrder': {
+        'width': 15,
+        'style': 'defaultCell'
+    },
+    'InvoiceAmount': {
+        'width': 15,
+        'style': 'currencyCell'
+    },
+    'Filename': {
+        'width': 25,
+        'style': 'defaultCell'
+    },
+    'BillingPeriod': {
+        'width': 25,
+        'style': 'defaultCell'
+    },
 }
 
 def styleColumn(worksheet, column, type, rowStart = None, rowStop = None):
@@ -299,7 +319,7 @@ def formatInvoiceTab(worksheet, sheetInfo):
 
     worksheet['D3'] = 'Invoice Date:'
     worksheet['D3'].style = 'invoiceHeader'
-    worksheet['E3'] = datetime.datetime.now().strftime("%m/%d/%Y")
+    worksheet['E3'] = datetime.datetime.now().strftime('%d %b %Y')
     worksheet['E3'].style = 'invoiceValue'
     worksheet['D4'] = 'Invoice Number:'
     worksheet['D4'].style = 'invoiceHeader'
@@ -320,7 +340,7 @@ def formatInvoiceTab(worksheet, sheetInfo):
     worksheet['E7'].style = 'invoiceValue'
     worksheet['D8'] = 'Billing From:'
     worksheet['D8'].style = 'invoiceHeader'
-    worksheet['E8'] = sheetInfo['dateStart'] + ' - ' + sheetInfo['dateEnd']
+    worksheet['E8'] = sheetInfo['billingPeriod']
     worksheet['E8'].style = 'invoiceValue'
     worksheet['D9'] = 'Payment Terms:'
     worksheet['D9'].style = 'invoiceHeader'
@@ -415,7 +435,7 @@ def formatCostsTab(worksheet, sheetInfo):
 
     worksheet['D3'] = 'Invoice Date:'
     worksheet['D3'].style = 'invoiceHeader'
-    worksheet['E3'] = datetime.datetime.now().strftime("%m/%d/%Y")
+    worksheet['E3'] = datetime.datetime.now().strftime('%d %b %Y')
     worksheet['E3'].style = 'invoiceValue'
     worksheet['D4'] = 'Invoice Number:'
     worksheet['D4'].style = 'invoiceHeader'
@@ -436,7 +456,7 @@ def formatCostsTab(worksheet, sheetInfo):
     worksheet['E7'].style = 'invoiceValue'
     worksheet['D8'] = 'Billing From:'
     worksheet['D8'].style = 'invoiceHeader'
-    worksheet['E8'] = sheetInfo['dateStart'] + ' - ' + sheetInfo['dateEnd']
+    worksheet['E8'] = sheetInfo['billingPeriod']
     worksheet['E8'].style = 'invoiceValue'
     worksheet['D9'] = 'Payment Terms:'
     worksheet['D9'].style = 'invoiceHeader'
@@ -526,15 +546,7 @@ def formatDetailTab(worksheet):
     styleColumn(worksheet, 'T', 'Rate')
     styleColumn(worksheet, 'U', 'Total')
     styleColumn(worksheet, 'V', 'Total')
-
-    # styleColumn(worksheet, 'W', 'Hours')
-    # styleColumn(worksheet, 'X', 'Total')
-
-    # styleColumn(worksheet, 'Y', 'Rate')
-    # styleColumn(worksheet, 'Z', 'Percentage')
-    # styleColumn(worksheet, 'AA', 'Total')
-    # styleColumn(worksheet, 'AB', 'Percentage')
-    # styleColumn(worksheet, 'AC', 'Total')
+    styleColumn(worksheet, 'W', 'Total')
 
     # create a table
     table = Table(displayName='Detail', ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
@@ -559,7 +571,126 @@ def formatDetailTab(worksheet):
     sumColumn(worksheet, 'S', 'number', start, stop, top=True)
     sumColumn(worksheet, 'U', 'currency', start, stop, top=True)
     sumColumn(worksheet, 'V', 'currency', start, stop, top=True)
-    # sumColumn(worksheet, 'W', 'number', start, stop, top=True)
-    # sumColumn(worksheet, 'X', 'currency', start, stop, top=True)
-    # sumColumn(worksheet, 'AA', 'currency', start, stop, top=True)
-    # sumColumn(worksheet, 'AC', 'currency', start, stop, top=True)
+    sumColumn(worksheet, 'W', 'currency', start, stop, top=True)
+
+def formatSummaryTab(worksheet):
+    worksheet.delete_cols(1, 1)
+
+    styleColumn(worksheet, 'A', 'Description')
+    styleColumn(worksheet, 'B', 'CLIN')
+    styleColumn(worksheet, 'C', 'Filename')
+    styleColumn(worksheet, 'D', 'CLIN')
+    styleColumn(worksheet, 'E', 'InvoiceNumber')
+    styleColumn(worksheet, 'F', 'TaskOrder')
+    styleColumn(worksheet, 'G', 'BillingPeriod')
+    styleColumn(worksheet, 'H', 'InvoiceAmount')
+
+    # create a table
+    table = Table(displayName='Detail', ref="A1:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A2']
+
+    # add SUM() formulas
+    start = 2
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'H', 'currency', start, stop)
+
+def formatDaysTab(worksheet):
+    worksheet.insert_rows(1, 1)
+    yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+
+    styleColumn(worksheet, 'A', 'Date')
+    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'C', 'Task Name')
+    styleColumn(worksheet, 'D', 'Regular')
+    styleColumn(worksheet, 'E', 'Regular')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 2
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
+
+    worksheet['B1'].value = '=D1-E1'
+    worksheet['B1'].style = 'numberCellTotal'
+
+    for row in range(3, worksheet.max_row):
+        if worksheet[f'D{row}'].value != worksheet[f'E{row}'].value:
+            worksheet[f'D{row}'].fill = yellow
+            worksheet[f'E{row}'].fill = yellow 
+
+def formatEmployeesTab(worksheet):
+    worksheet.insert_rows(1, 1)
+    yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+
+    styleColumn(worksheet, 'A', 'Name')
+    styleColumn(worksheet, 'B', 'Regular')
+    styleColumn(worksheet, 'C', 'Regular')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 2
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'B', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'C', 'number', start, stop, top=True)
+
+    worksheet['A1'].value = '=B1-C1'
+    worksheet['A1'].style = 'numberCellTotal'
+
+    for row in range(3, worksheet.max_row):
+        if worksheet[f'B{row}'].value != worksheet[f'C{row}'].value:
+            worksheet[f'B{row}'].fill = yellow 
+            worksheet[f'C{row}'].fill = yellow 
+    
+def formatTasksTab(worksheet):
+    worksheet.insert_rows(1, 1)
+    yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+
+    maxColumns = worksheet.max_column
+    # print(f'maxColumns: {maxColumns}, {get_column_letter(maxColumns)}')
+
+    styleColumn(worksheet, 'A', 'Date')
+    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'C', 'Task Name')
+
+    for column in range(4, maxColumns + 1):
+        # print(f'styling column: {get_column_letter(column)}')
+        styleColumn(worksheet, get_column_letter(column), 'Regular')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:" + get_column_letter(maxColumns) + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 2
+    stop = worksheet.max_row
+    for column in range(3, maxColumns + 1):
+        # print(f'summing column: {get_column_letter(column)}')
+        sumColumn(worksheet, get_column_letter(column), 'number', start, stop, top=True)
+
+    for column in range(3, 10):
+        # compare this column to the corresponding TCP column
+        thisColumn = get_column_letter(column)
+        tcpColumn = get_column_letter(column + 7)
+
+        # print(f'comparing {get_column_letter(column)} to {get_column_letter(tcpColumn)}')
+
+        for row in range(3, worksheet.max_row):
+            if worksheet[f'{thisColumn}{row}'].value != worksheet[f'{tcpColumn}{row}'].value:
+                worksheet[f'A{row}'].fill = yellow
+                worksheet[f'B{row}'].fill = yellow 
+                worksheet[f'{thisColumn}{row}'].fill = yellow
+                worksheet[f'{tcpColumn}{row}'].fill = yellow
+
+    worksheet['B1'].value = '=Q1-R1'
+    worksheet['B1'].style = 'numberCellTotal'

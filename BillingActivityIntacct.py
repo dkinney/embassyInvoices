@@ -24,6 +24,21 @@ TaskNames = {
 	'3333': 'Admin'
 }
 
+TaskMap = {
+	# '3526': '3333',
+	# '3527': '3330',
+	# '3311': '3322',
+	# '3314': '3325',
+	# '3317': '3326',
+	# '3524': '3326',
+    'Scheduled Overtime': 'ScheduledOT',
+	'Scheduled - Overtime': 'ScheduledOT',
+	'Unscheduled Overtime': 'UnscheduledOT',
+	'Unscheduled/ Emergency OT': 'UnscheduledOT',
+	'On Call- Overtime': 'On-callOT',
+	'Local Holiday': 'LocalHoliday'
+}
+
 RateTypes = {
 	'3322': 'Regular',
 	'3323': 'Overtime',
@@ -37,34 +52,41 @@ RateTypes = {
 	'3333': 'Regular'
 }
 
-# from https://stackoverflow.com/questions/33470130/read-excel-xml-xls-file-with-pandas
-class ExcelHandler(ContentHandler):
-	def __init__(self):
-		self.chars = [  ]
-		self.cells = [  ]
-		self.rows = [  ]
-		self.tables = [  ]
+def formatName(text):
+	# print(f'formatName({text})')
+	tokens = text.split(' ')
 
-	def characters(self, content):
-		self.chars.append(content)
+	if len(tokens) < 2:
+			# not a name
+			return text
 
-	def startElement(self, name, atts):
-		if name=="Cell":
-			self.chars = [  ]
-		elif name=="Row":
-			self.cells=[  ]
-		elif name=="Table":
-			self.rows = [  ]
+	lastName = tokens[0]
+	firstName = tokens[1]
 
-	def endElement(self, name):
-		if name=="Cell":
-			self.cells.append(''.join(self.chars))
-		elif name=="Row":
-			self.rows.append(self.cells)
-		elif name=="Table":
-			self.tables.append(self.rows)
+	middleInitial = ''
 
-class BillingActivity:
+	# hacktastic - eat extra spaces
+	if len(tokens) > 3:
+			middleInitial = tokens[3]
+	elif len(tokens) > 2:
+			middleInitial = tokens[2]
+
+	# print(f'formatName({text}) -> {lastName}, {firstName} {middleInitial}')
+	return f'{lastName}, {firstName} {middleInitial}'
+
+def cleanupTaskID(text):
+	if text in TaskNameMap:
+		return TaskNameMap[text]
+	
+	return text
+
+def cleanupTask(text):
+	if text in TaskMap:
+		return TaskMap[text]
+	
+	return text
+	
+class BillingActivityIntacct:
 	def __init__(self, filename=None, verbose=False):
 		self.data = None	# a dataframe containing the full billing information loaded from a file
 		self.dateStart = datetime(1970,1,1)	# start date of the billing period loaded from a file
@@ -74,43 +96,57 @@ class BillingActivity:
 			if verbose:
 				print(f'Parsing billing data from {filename}')
 
-			# we get data from Time Clock Plus (TCP) in an OpenXML format
-			# since it is not .xlsx proper, we have to parse it
-			excelHandler = ExcelHandler()
-			parse(filename, excelHandler)
-			df = pd.DataFrame(excelHandler.tables[0][4:], columns=excelHandler.tables[0][3])
+			# we get data from Intacct in an CSV format
+			df = pd.read_csv(filename, header=0, dtype=str)
 
-			# Find label of the first row where the value 'Number' is found (within column 0)
-			# This eliminates the header rows that are above the actual data
-			row_label = (df.iloc[:, 0] == 'Number').idxmax()
-			df = df.loc[row_label + 1:, :]
+			# drop unused columns
+			if 'd' in df.columns:
+				df.drop(columns=['d'], inplace=True)
 
-			# explicitly set the column names
-			df.columns = ['Number', 'TcpName', 'Select', 'InDate', 'InTime', 'OutDate', 'OutTime', 'TaskID', 'Hours']
+			if 'Select' in df.columns:
+				df.drop(columns=['Select'], inplace=True)
+
+			df.drop(columns=['Line no.', 'Contract ID', 'Item ID', 'Fee percent', 'Price', 'Total', 'Descr', 'Contract Group ID', 'Location ID'], inplace=True)
+
+			# rename columns
+			df.rename(columns={
+				'Date': 'Date',
+				'Task ID': 'TaskID',
+				'Task name': 'TaskName',
+				'Qty': 'Hours',
+				'Employee name': 'EmployeeName'
+			}, inplace=True)
+
+			# clean up values for TaskID, TaskName
+			df['TaskID'] = df['TaskID'].apply(cleanupTask)
+			df['TaskName'] = df['TaskName'].apply(cleanupTask)
+			
+			# clean up values for EmployeeName
+			df['EmployeeName'] = df['EmployeeName'].apply(formatName)
 
 			# We only need the date for these hours, not the time nor the specific in/out times
 			# We want the date in a datetime, not a string
-			df['Date'] = pd.to_datetime(df["InDate"], errors="coerce").dt.strftime("%m-%d-%Y")
-			df['Date'] = df['Date'].astype(dtype='datetime64[ns]')
-			
-			# Get the TaskName and RateType from the TaskID
-			df['TaskName'] = df['TaskID'].map(lambda x: TaskNames.get(x, 'Unknown'))
+			df["Date"] = pd.to_datetime(df["Date"], errors="coerce").dt.strftime("%m/%d/%Y")
 			df['RateType'] = df['TaskID'].map(lambda x: RateTypes.get(x, 'Unknown'))
-			
-			df.fillna('None', inplace=True)
-			df = df[~df['Number'].isin(['Total:', 'None'])]
-			df = df.replace('', np.NaN)
 
-			df = df.dropna(axis=0, how='any', subset=['TaskID', 'Hours'])
-			df['Number'].ffill(inplace=True)
-			df['TcpName'].ffill(inplace=True)
+			df['Date'] = df['Date'].astype(dtype='datetime64[ns]')
 			df['Hours'] = df['Hours'].astype(float)
 
-			df.drop(columns=['Select', 'InDate', 'InTime', 'OutDate', 'OutTime'], inplace=True)
-			df.sort_values(['Date', 'TcpName', 'TaskID'], ascending=[True, True, True], inplace=True)
+			# df.fillna('None', inplace=True)
+			# df = df.replace('', np.NaN)
+
+			before = len(df)
+			df = df.drop_duplicates(subset=['Date', 'EmployeeName', 'TaskName', 'Hours'], keep='first')
+			after = len(df)
+
+			if before != after:
+				print(f'WARNING: dropped {before - after} duplicate records')
+
+			df.sort_values(['Date', 'EmployeeName', 'TaskID'], ascending=[True, True, True], inplace=True)
 			
 			self.dateStart = pd.to_datetime(df['Date'].min(), errors="coerce")
 			self.dateEnd = pd.to_datetime(df['Date'].max(), errors="coerce")
+
 			self.data = df
 
 			billingRates = BillingRates(verbose=False)
@@ -126,13 +162,9 @@ class BillingActivity:
 			# nothing to do
 			return
 
-		# print('Joining billing activity...')
-		# print(self.data)
-		# print('...with billing rates')
-		# print(billingRates.data)
-
-		joined = self.data.join(billingRates.data.set_index('EmployeeID'), on='Number', how='left', rsuffix='_rates')
-		joined.drop(columns=['TcpName'], inplace=True)
+		# Intacct data does not have an EmployeeID, so we need to join on the EmployeeName
+		# joined = self.data.join(billingRates.data.set_index('EmployeeID'), on='Number', how='left', rsuffix='_rates')
+		joined = self.data.join(billingRates.data.set_index('EmployeeName'), on='EmployeeName', how='left', rsuffix='_rates')
 
 		joined['Rate'] = np.where(joined['RateType'] == 'Overtime', joined['BillRateOT'], joined['BillRateReg'])
 		joined['Description'] = np.where(joined['RateType'] == 'Overtime', '(Overtime)', joined['Category'])
@@ -166,16 +198,16 @@ class BillingActivity:
 		pivot['HoursReg'] = pivot['Regular'] + pivot['LocalHoliday'] + pivot['Holiday'] + pivot['Vacation'] + pivot['Admin'] + pivot['Bereavement']
 		pivot['HoursOT'] = pivot['Overtime'] + pivot['On-callOT'] + pivot['ScheduledOT'] + pivot['UnscheduledOT']
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
-		pivot['PostWages'] = pivot['Regular'] * pivot['HourlyRateReg'] # only use "Regular" hours for posting, not OT nor other type of regular hours
-		pivot['Posting'] = pivot['PostWages'] * pivot['PostingRate']
-		pivot['Hazard'] = pivot['PostWages'] * pivot['HazardRate']
+		pivot['Wages'] = pivot['HoursReg'] * pivot['HourlyRateReg']
+		pivot['Posting'] = pivot['Wages'] * pivot['PostingRate']
+		pivot['Hazard'] = pivot['Wages'] * pivot['HazardRate']
 
 		pivot = pivot[[
 			'Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 
 			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal',
-			'HourlyRateReg', 'PostWages', 'Posting', 'Hazard'
+			'HourlyRateReg', 'Posting', 'Hazard'
 		]]
 
 		pivot.sort_values(['Date', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName'], inplace=True)
@@ -187,6 +219,7 @@ class BillingActivity:
 		return records
 	
 	def startYear(self):
+		print(f'self.dateStart: {self.dateStart} type: {type(self.dateStart)}')
 		return self.dateStart.year
 	
 	def startMonth(self):
@@ -257,11 +290,13 @@ if __name__ == '__main__':
 
 	activityFilename = sys.argv[1] if len(sys.argv) > 1 else None
 
+	print(f'Parsing billing data from {activityFilename}')
+
 	if activityFilename is None:
 		print(f'Usage: {sys.argv[0]} <billing activity file>')
 		exit()
 
-	activity = BillingActivity(activityFilename, verbose=False)
+	activity = BillingActivityIntacct(activityFilename, verbose=False)
 
 	print(f'\Invoice Details:')
 	print(f'Date range: {activity.dateStart} to {activity.dateEnd}')
@@ -269,17 +304,28 @@ if __name__ == '__main__':
 	locationInfo = activity.locationsByCLIN()
 	print(f'LocationInfo: {locationInfo}\n')
 
-	for clin in locationInfo.keys():
-		print(f'\nLabor Invoices for CLIN: {clin}')
+	now = pd.Timestamp.now().strftime("%Y%m%d%H%M")
+	outputFile = f'BillingActivityIntacct-{now}.xlsx'
+	
+	with pd.ExcelWriter(outputFile) as writer:
 
-		for location in locationInfo[clin]:
-			print(f'Invoice for: {location}')
-			data = activity.groupedForInvoicing(clin=clin, location=location)
+		for clin in locationInfo.keys():
+			print(f'\nLabor Invoices for CLIN: {clin}')
+
+			for location in locationInfo[clin]:
+				print(f'Invoice for: {location}')
+				data = activity.groupedForInvoicing(clin=clin, location=location)
+				data.to_excel(writer, sheet_name=f'Labor-{location}', index=False)
+				print('\n'.join(data.to_string(index=False).split('\n')[1:]))
+
+			print(f'\nCost Invoices for CLIN: {clin}')
+			data = activity.groupedForCosts(clin=clin)
+			data.to_excel(writer, sheet_name=f'Costs-{location}', index=False)
 			print('\n'.join(data.to_string(index=False).split('\n')[1:]))
 
-		print(f'\nCost Invoices for CLIN: {clin}')
-		data = activity.groupedForCosts(clin=clin)
-		print('\n'.join(data.to_string(index=False).split('\n')[1:]))
-
 		print('\nDetails:')
-		print(activity.details(clin=clin))
+		details = activity.details(clin=clin)
+		print(details)
+		details.to_excel(writer, sheet_name=f'Details-{clin}', index=False)
+
+
