@@ -3,7 +3,7 @@ import openpyxl
 from openpyxl import load_workbook
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image
-from openpyxl.worksheet.table import Table
+from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Border, Side, PatternFill
 
@@ -11,6 +11,8 @@ from InvoiceStyles import styles
 
 thinSide = Side(style='thin', color="000000")
 thickSide = Side(style='thin', color="000000")
+yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+orange = PatternFill(start_color='FFA500', end_color='FFA500', fill_type='solid')
 
 dataStyles = {
     'CLIN': {
@@ -573,6 +575,62 @@ def formatDetailTab(worksheet):
     sumColumn(worksheet, 'V', 'currency', start, stop, top=True)
     sumColumn(worksheet, 'W', 'currency', start, stop, top=True)
 
+def formatFullDetailsTab(worksheet):
+    worksheet.delete_cols(1, 1)
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'CLIN')
+    styleColumn(worksheet, 'B', 'Location')
+    styleColumn(worksheet, 'C', 'City')
+    styleColumn(worksheet, 'D', 'SubCLIN')
+    styleColumn(worksheet, 'E', 'Category')
+    styleColumn(worksheet, 'F', 'Name')
+
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+    styleColumn(worksheet, 'K', 'Hours')
+    styleColumn(worksheet, 'L', 'Hours')
+
+    styleColumn(worksheet, 'M', 'Hours')
+    styleColumn(worksheet, 'N', 'Hours')
+    styleColumn(worksheet, 'O', 'Hours')
+    styleColumn(worksheet, 'P', 'Hours')
+
+    styleColumn(worksheet, 'Q', 'Hours')
+    styleColumn(worksheet, 'R', 'Hours')
+    styleColumn(worksheet, 'S', 'Hours')
+    
+    styleColumn(worksheet, 'T', 'Rate')
+    styleColumn(worksheet, 'U', 'Total')
+    styleColumn(worksheet, 'V', 'Total')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'G', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'H', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'I', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'J', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'K', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'L', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'M', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'N', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'O', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'P', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'Q', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'R', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'S', 'number', start, stop, top=True)
+
+    sumColumn(worksheet, 'U', 'currency', start, stop, top=True)
+    sumColumn(worksheet, 'V', 'currency', start, stop, top=True)
+
 def formatSummaryTab(worksheet):
     worksheet.delete_cols(1, 1)
 
@@ -597,7 +655,6 @@ def formatSummaryTab(worksheet):
 
 def formatDaysTab(worksheet):
     worksheet.insert_rows(1, 1)
-    yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
 
     styleColumn(worksheet, 'A', 'Date')
     styleColumn(worksheet, 'B', 'Name')
@@ -622,11 +679,10 @@ def formatDaysTab(worksheet):
     for row in range(3, worksheet.max_row):
         if worksheet[f'D{row}'].value != worksheet[f'E{row}'].value:
             worksheet[f'D{row}'].fill = yellow
-            worksheet[f'E{row}'].fill = yellow 
+            worksheet[f'E{row}'].fill = yellow
 
 def formatEmployeesTab(worksheet):
     worksheet.insert_rows(1, 1)
-    yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
 
     styleColumn(worksheet, 'A', 'Name')
     styleColumn(worksheet, 'B', 'Regular')
@@ -653,7 +709,7 @@ def formatEmployeesTab(worksheet):
     
 def formatTasksTab(worksheet):
     worksheet.insert_rows(1, 1)
-    yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+    
 
     maxColumns = worksheet.max_column
     # print(f'maxColumns: {maxColumns}, {get_column_letter(maxColumns)}')
@@ -694,3 +750,260 @@ def formatTasksTab(worksheet):
 
     worksheet['B1'].value = '=Q1-R1'
     worksheet['B1'].style = 'numberCellTotal'
+
+def formatActivityDataTab(worksheet):
+    styleColumn(worksheet, 'A', 'Date')
+    # styleColumn(worksheet, 'B', 'CLIN')
+    # styleColumn(worksheet, 'C', 'Location')
+    # styleColumn(worksheet, 'D', 'City')
+    # styleColumn(worksheet, 'E', 'SubCLIN')
+    # styleColumn(worksheet, 'F', 'Category')
+    # styleColumn(worksheet, 'G', 'Description')
+    # styleColumn(worksheet, 'H', 'Name')
+    # styleColumn(worksheet, 'I', 'Task ID')
+    # styleColumn(worksheet, 'J', 'Task Name')
+    # styleColumn(worksheet, 'K', 'Hours')
+    # styleColumn(worksheet, 'L', 'Rate')
+    # styleColumn(worksheet, 'M', 'Rate')
+    # styleColumn(worksheet, 'N', 'Rate')
+    # styleColumn(worksheet, 'O', 'Rate')
+
+    # create a table
+    # table = Table(displayName=worksheet.title, ref=f'A1:O{worksheet.max_row}')
+    # worksheet.add_table(table)
+    # worksheet.freeze_panes = worksheet['A2']
+
+def formatDebugTab(worksheet):
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'Name')
+    styleColumn(worksheet, 'B', 'Hours')
+    styleColumn(worksheet, 'C', 'Hours')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Hours')
+    styleColumn(worksheet, 'F', 'Hours')
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+    styleColumn(worksheet, 'K', 'Hours')
+    styleColumn(worksheet, 'L', 'Hours')
+    styleColumn(worksheet, 'M', 'Hours')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'B', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'C', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'F', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'G', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'H', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'I', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'J', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'K', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'L', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'M', 'number', start, stop, top=True)
+
+def formatPivotTab(worksheet):
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'Date')
+    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'C', 'Hours')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Hours')
+    styleColumn(worksheet, 'F', 'Hours')
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+    styleColumn(worksheet, 'K', 'Hours')
+    styleColumn(worksheet, 'L', 'Hours')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:L" + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'C', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'F', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'G', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'H', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'I', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'J', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'K', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'L', 'number', start, stop, top=True)
+
+def formatJoinedPivotTab(worksheet, taskOffset):
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'Date')
+    styleColumn(worksheet, 'B', 'Name')
+
+    # Intacct
+    styleColumn(worksheet, 'C', 'Hours')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Hours')
+    styleColumn(worksheet, 'F', 'Hours')
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+    styleColumn(worksheet, 'K', 'Hours')
+    styleColumn(worksheet, 'L', 'Hours')
+    styleColumn(worksheet, 'M', 'Hours')
+
+    # TCP
+    styleColumn(worksheet, 'N', 'Hours')
+    styleColumn(worksheet, 'O', 'Hours')
+    styleColumn(worksheet, 'P', 'Hours')
+    styleColumn(worksheet, 'Q', 'Hours')
+    styleColumn(worksheet, 'R', 'Hours')
+    styleColumn(worksheet, 'S', 'Hours')
+    styleColumn(worksheet, 'T', 'Hours')
+    styleColumn(worksheet, 'U', 'Hours')
+    styleColumn(worksheet, 'V', 'Hours')
+    styleColumn(worksheet, 'W', 'Hours')
+    styleColumn(worksheet, 'X', 'Hours')
+
+    # create a table
+    ref = f'$A$2:$X${worksheet.max_row}'
+    print(f'{worksheet.title} ref: {ref}')
+    table = Table(displayName=worksheet.title, ref=ref)
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'C', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'F', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'G', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'H', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'I', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'J', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'K', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'L', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'M', 'number', start, stop, top=True)
+
+    sumColumn(worksheet, 'N', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'O', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'P', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'Q', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'R', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'S', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'T', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'U', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'V', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'W', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'X', 'number', start, stop, top=True)
+
+    for column in range(3, 14):
+        # compare this column to the corresponding TCP column
+        thisColumn = get_column_letter(column)
+        tcpColumn = get_column_letter(column + taskOffset)
+
+        for row in range(start, stop + 1):
+            color = yellow
+
+            # if the subtotals match, then it is merely a difference in Task
+            if worksheet[f'M{row}'].value == worksheet[f'X{row}'].value:
+                color = orange
+
+            if worksheet[f'{thisColumn}{row}'].value != worksheet[f'{tcpColumn}{row}'].value:
+                worksheet[f'A{row}'].fill = color
+                worksheet[f'B{row}'].fill = color 
+                worksheet[f'{thisColumn}{row}'].fill = color
+                worksheet[f'{tcpColumn}{row}'].fill = color
+
+    # worksheet['A1'].value = '=X1-M1'
+    # worksheet['A1'].style = 'numberCellTotal'
+
+def formatDiffsTab(worksheet):
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'Date')
+    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'C', 'Task Name')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Hours')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:E" + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
+
+    worksheet['A1'].value = '=D1-E1'
+    worksheet['A1'].style = 'numberCellTotal'
+
+    for row in range(3, worksheet.max_row + 1):
+        if worksheet[f'D{row}'].value != worksheet[f'E{row}'].value:
+            worksheet[f'D{row}'].fill = yellow
+            worksheet[f'E{row}'].fill = yellow
+
+def highlightDiffs(worksheet1, worksheet2) -> bool:
+    rows1 = worksheet1.max_row
+    rows2 = worksheet2.max_row
+    cols1 = worksheet1.max_column
+    cols2 = worksheet2.max_column
+
+    rows = max(rows1, rows2)
+
+    if cols1 != cols2:
+        print('\n\n\nThe two tabs do not have the same number of columns!')
+        print(f'cols1: {cols1}, cols2: {cols2}')
+        return False
+    
+    for row in range(1, rows):
+        for col in range(1, cols1 + 1):
+            if worksheet1.cell(row=row, column=col).value != worksheet2.cell(row=row, column=col).value:
+                worksheet1.cell(row=row, column=col).fill = yellow
+                worksheet2.cell(row=row, column=col).fill = yellow
+    
+    return True
+
+def formatJoinTab(worksheet):
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'Date')
+    styleColumn(worksheet, 'B', 'Hours')
+    styleColumn(worksheet, 'C', 'Hours')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'B', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'C', 'number', start, stop, top=True)
+
+    worksheet['A1'].value = '=B1-C1'
+    worksheet['A1'].style = 'numberCellTotal'
+
+    for row in range(3, worksheet.max_row + 1):
+        if worksheet[f'B{row}'].value != worksheet[f'C{row}'].value:
+            worksheet[f'B{row}'].fill = yellow
+            worksheet[f'C{row}'].fill = yellow

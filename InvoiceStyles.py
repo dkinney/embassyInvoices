@@ -47,6 +47,11 @@ style = NamedStyle(name="textCell")
 style.alignment = Alignment(horizontal='left')
 styles['textCell'] = style
 
+style = NamedStyle(name="boldTextCell")
+style.alignment = Alignment(horizontal='left')
+style.font = Font(bold=True)
+styles['boldTextCell'] = style
+
 style = NamedStyle(name="textCellBorder")
 style.border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
 style.alignment = Alignment(horizontal='left')
