@@ -8,6 +8,10 @@ from xml.sax import ContentHandler, parse
 
 from BillingRates import BillingRates
 
+from openpyxl import load_workbook
+from InvoiceStyles import styles
+from InvoiceFormat import formatActivityDataTab
+
 baseYear = '0'
 upchargeRate = 0.35
 
@@ -300,32 +304,22 @@ if __name__ == '__main__':
 
 	print(f'\Invoice Details:')
 	print(f'Date range: {activity.dateStart} to {activity.dateEnd}')
-
-	locationInfo = activity.locationsByCLIN()
-	print(f'LocationInfo: {locationInfo}\n')
+	print(activity.data)
 
 	now = pd.Timestamp.now().strftime("%Y%m%d%H%M")
 	outputFile = f'BillingActivityIntacct-{now}.xlsx'
-	
+
 	with pd.ExcelWriter(outputFile) as writer:
+			activity.data.to_excel(writer, sheet_name='Details', index=False)
 
-		for clin in locationInfo.keys():
-			print(f'\nLabor Invoices for CLIN: {clin}')
+	# Apply formatting in place
+	workbook = load_workbook(outputFile)
 
-			for location in locationInfo[clin]:
-				print(f'Invoice for: {location}')
-				data = activity.groupedForInvoicing(clin=clin, location=location)
-				data.to_excel(writer, sheet_name=f'Labor-{location}', index=False)
-				print('\n'.join(data.to_string(index=False).split('\n')[1:]))
+	for styleName in styles.keys():
+			workbook.add_named_style(styles[styleName])
+		
+	worksheet = workbook['Details']
+	formatActivityDataTab(worksheet)
 
-			print(f'\nCost Invoices for CLIN: {clin}')
-			data = activity.groupedForCosts(clin=clin)
-			data.to_excel(writer, sheet_name=f'Costs-{location}', index=False)
-			print('\n'.join(data.to_string(index=False).split('\n')[1:]))
-
-		print('\nDetails:')
-		details = activity.details(clin=clin)
-		print(details)
-		details.to_excel(writer, sheet_name=f'Details-{clin}', index=False)
-
-
+	workbook.save(outputFile)
+	print(f'Wrote {outputFile}')

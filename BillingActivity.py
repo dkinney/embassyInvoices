@@ -7,9 +7,12 @@ import numpy as np
 from xml.sax import ContentHandler, parse
 
 from BillingRates import BillingRates
+from openpyxl import load_workbook
+from InvoiceStyles import styles
+from InvoiceFormat import formatFullDetailsTab, formatActivityDataTab
 
 baseYear = '0'
-upchargeRate = 0.35
+upchargeRate = 0.035
 
 TaskNames = {
 	'3322': 'Regular',
@@ -142,11 +145,14 @@ class BillingActivity:
 		joined = joined[['Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'Description', 'EmployeeName', 'TaskID', 'TaskName', 'Hours', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate']]
 		self.data = joined
 
-	def details(self, clin=None):
+	def details(self, clin=None, location=None):
 		df = self.data.copy()
 		
 		if clin is not None:
 			df = df.loc[df['CLIN'] == clin]
+
+		if location is not None:
+			df = df.loc[df['Location'] == location]
 
 		grouped = df.groupby(['Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 'TaskID', 'TaskName', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate'], as_index=False).agg({'Hours': 'sum'})
 
@@ -192,6 +198,12 @@ class BillingActivity:
 	def startMonth(self):
 		return self.dateStart.month
 	
+	def billingPeriod(self):
+		startMonthName = self.dateStart.strftime('%b')
+		endMonthName = self.dateEnd.strftime('%b')
+		billingPeriod = f'{self.dateStart.day} {startMonthName} {self.dateStart.year} - {self.dateEnd.day} {endMonthName} {self.dateEnd.year}'
+		return billingPeriod
+
 	def locationsByCLIN(self):
 		result = {}
 		for clin in self.data['CLIN'].unique():
@@ -220,7 +232,7 @@ class BillingActivity:
 		invoiceDetail.sort_values(['SubCLIN', 'EmployeeName', 'Description'], ascending=[True, True, False], inplace=True)
 		return invoiceDetail
 	
-	def groupedForCosts(self, clin=None):
+	def groupedForCosts(self, clin=None, location=None):
 		costDetail = self.details()
 
 		if clin is not None:
@@ -250,6 +262,46 @@ class BillingActivity:
 
 		return costs
 
+	def groupedForHoursReport(self, clin=None, location=None):
+		details = self.details(clin=clin, location=location)
+
+		details = details[[
+			'City',
+			'SubCLIN', 
+			'EmployeeName', 
+			'Regular',
+			'LocalHoliday', 
+			'Admin',
+			'Overtime',
+			'On-callOT', 
+			'ScheduledOT', 
+			'UnscheduledOT'
+		]]
+
+		invoiceDetail = details.groupby(['City', 'SubCLIN', 'EmployeeName'], as_index=False).agg({
+			'Regular': 'sum',
+			'LocalHoliday': 'sum',
+			'Admin': 'sum',
+			'Overtime': 'sum',
+			'On-callOT': 'sum',
+			'ScheduledOT': 'sum',
+			'UnscheduledOT': 'sum'
+		})
+
+		invoiceDetail['Subtotal'] = invoiceDetail['Regular'] + invoiceDetail['On-callOT'] + invoiceDetail['ScheduledOT'] + invoiceDetail['UnscheduledOT'] + invoiceDetail['Overtime'] + invoiceDetail['LocalHoliday'] + invoiceDetail['Admin']
+		invoiceDetail.sort_values(['City', 'SubCLIN', 'EmployeeName'], inplace=True)
+
+		invoiceDetail.rename(columns={
+			'SubCLIN': 'CLIN', 
+			'EmployeeName': 'Name',
+			'On-callOT': 'On-call OT',
+			'ScheduledOT': 'Sched OT',
+			'UnscheduledOT': 'Unschd OT',
+			'LocalHoliday': 'Local Hol'
+		}, inplace=True)
+		
+		return invoiceDetail
+
 if __name__ == '__main__':
 	import sys
 
@@ -263,23 +315,31 @@ if __name__ == '__main__':
 
 	activity = BillingActivity(activityFilename, verbose=False)
 
-	print(f'\Invoice Details:')
+	print(f'\nInvoice Details:')
 	print(f'Date range: {activity.dateStart} to {activity.dateEnd}')
+	print(activity.data)
 
-	locationInfo = activity.locationsByCLIN()
-	print(f'LocationInfo: {locationInfo}\n')
+	print(f'\nInvoice Hours Report:')
+	hours = activity.groupedForHoursReport(clin='002', location='Ukraine')
+	print(hours)
 
-	for clin in locationInfo.keys():
-		print(f'\nLabor Invoices for CLIN: {clin}')
+	exit()
 
-		for location in locationInfo[clin]:
-			print(f'Invoice for: {location}')
-			data = activity.groupedForInvoicing(clin=clin, location=location)
-			print('\n'.join(data.to_string(index=False).split('\n')[1:]))
+	now = pd.Timestamp.now().strftime("%Y%m%d%H%M")
+	outputFile = f'BillingActivity-{now}.xlsx'
 
-		print(f'\nCost Invoices for CLIN: {clin}')
-		data = activity.groupedForCosts(clin=clin)
-		print('\n'.join(data.to_string(index=False).split('\n')[1:]))
+	with pd.ExcelWriter(outputFile) as writer:
+			activity.data.to_excel(writer, sheet_name='Details', index=False)
 
-		print('\nDetails:')
-		print(activity.details(clin=clin))
+	# Apply formatting in place
+	workbook = load_workbook(outputFile)
+
+	for styleName in styles.keys():
+			workbook.add_named_style(styles[styleName])
+		
+	worksheet = workbook['Details']
+	formatActivityDataTab(worksheet)
+
+	workbook.save(outputFile)
+	print(f'Wrote {outputFile}')
+

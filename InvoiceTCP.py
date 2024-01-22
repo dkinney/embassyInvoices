@@ -5,7 +5,9 @@ from openpyxl import load_workbook
 
 from BillingActivity import BillingActivity
 from InvoiceStyles import styles
-from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatDetailTab, formatSummaryTab
+from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatHoursTab, formatDetailTab, formatSummaryTab
+
+versionString = 'v3'
 
 Regions = {
 	'001': 'Asia',
@@ -21,6 +23,37 @@ CountryCodes = {
 	'Russia': 'RU',
 	'Ukraine': 'UA',
 	'NATO': 'NATO'
+}
+
+CountryApprovers = {
+	'China': {
+		'MES': 'Christine Rosenquist – MES Resident Manager',
+		'COR': 'Michael Okamura – Senior Facility Manager – EAP COR-B'
+	},
+	'Hong Kong': {
+		'MES': 'Christine Rosenquist – MES Resident Manager',
+		'COR': 'Michael Okamura – Senior Facility Manager – EAP COR-B'
+	},
+	'Vietnam': {
+		'MES': 'Christine Rosenquist – MES Resident Manager',
+		'COR': 'Michael Okamura – Senior Facility Manager – EAP COR-B'
+	},
+	'Moldova': {
+		'MES': 'Kevin Carroll – MES Resident Manager',
+		'COR': 'Akram Elfeki - Senior Facility Manager – Moscow COR'
+	},
+	'Russia': {
+		'MES': 'Kevin Carroll – MES Resident Manager',
+		'COR': 'Akram Elfeki - Senior Facility Manager – Moscow COR'
+	},
+	'Ukraine': {
+		'MES': 'Kevin Carroll – MES Resident Manager',
+		'COR': 'Akram Elfeki - Senior Facility Manager – Moscow COR'
+	},
+	'NATO': {
+		'MES': 'Dustin Bergee – MES Resident Manager',
+		'COR': 'Robert Warner – DOS-COR-M'
+	}
 }
 
 def processActivityFromFile(filename):
@@ -46,7 +79,7 @@ def processActivityFromFile(filename):
 		# Labor
 		##########################################################
 
-		outputFile = f'Labor-{startYear}{startMonth}-{region}-v3.xlsx'
+		outputFile = f'Labor-{startYear}{startMonth}-{region}-{versionString}.xlsx'
 		laborInvoiceNumber = f'SDEL-{startYear}{startMonth}'
 
 		sheetInfo = {}
@@ -73,9 +106,9 @@ def processActivityFromFile(filename):
 				invoiceNumber = laborInvoiceNumber + CountryCodes[location]
 				invoiceAmount = data['Amount'].sum()
 
-				startMonthName = activity.dateStart.strftime('%b')
-				endMonthName = activity.dateEnd.strftime('%b')
-				billingPeriod = f'{activity.dateStart.day} {startMonthName} {activity.dateStart.year} - {activity.dateEnd.day} {endMonthName} {activity.dateEnd.year}'
+				# startMonthName = activity.dateStart.strftime('%b')
+				# endMonthName = activity.dateEnd.strftime('%b')
+				billingPeriod = activity.billingPeriod()
 
 				invoiceDetail = {
 					'description': f'{activity.dateStart.strftime("%B")} {startYear}',
@@ -92,6 +125,32 @@ def processActivityFromFile(filename):
 				sheetInfo[sheetName] = invoiceDetail
 				invoiceSummary.append(invoiceDetail)
 	
+		##########################################################
+		# Hours Report (for signatures)
+		##########################################################
+				
+		hoursReportFile = f'Hours-{startYear}{startMonth}-{region}-{versionString}.xlsx'
+
+		with pd.ExcelWriter(hoursReportFile) as writer:
+			for location in locationInfo[clin]:
+				sheetName = f'Hours-{location}'
+				print(f'Writing hours for {location} into {sheetName}...')
+				print(data)
+				data = activity.groupedForHoursReport(clin=clin, location=location)
+				data.to_excel(writer, sheet_name=sheetName, startrow=0, startcol=0, header=True, index=False)
+
+		hoursWorkbook = load_workbook(hoursReportFile)
+		for styleName in styles.keys():
+			hoursWorkbook.add_named_style(styles[styleName])
+
+		for location in locationInfo[clin]:
+			worksheet = hoursWorkbook[f'Hours-{location}']
+			formatHoursTab(worksheet, 
+				  approvers=CountryApprovers[location], 
+				  locationName=location, billingFrom=activity.billingPeriod())
+		
+		hoursWorkbook.save(hoursReportFile)
+		
 		# Apply formatting in place
 		workbook = load_workbook(outputFile)
 
@@ -109,7 +168,7 @@ def processActivityFromFile(filename):
 		# Costs
 		##########################################################
 
-		outputFile = f'Costs-{startYear}{startMonth}-{region}-v3.xlsx'
+		outputFile = f'Costs-{startYear}{startMonth}-{region}-{versionString}.xlsx'
 		costInvoiceNumber = f'SDEC-{startYear}{startMonth}'
 
 		sheetInfo = {}
@@ -169,7 +228,7 @@ def processActivityFromFile(filename):
 		# Details
 		##########################################################
 
-		outputFile = f'Details-{startYear}{startMonth}-{region}-v3.xlsx'
+		outputFile = f'Details-{startYear}{startMonth}-{region}-{versionString}.xlsx'
 
 		# There is only one tab in the workbook
 		sheetName = f'Details-{region}'

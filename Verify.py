@@ -42,6 +42,8 @@ if __name__ == '__main__':
 
 	taskNames = data['TaskName'].unique()
 
+	# print(f'\nTask names: {taskNames}')
+
 	intacctPivot = data.pivot_table(index=[
 		'Date', 'EmployeeName',
 	], columns='TaskName', values='Hours').reset_index()
@@ -52,6 +54,18 @@ if __name__ == '__main__':
 		else:
 			intacctPivot[taskName] = intacctPivot[taskName].fillna(0)
 
+	# print(f'\n\nIntacct Pivot:')
+	# print(intacctPivot.info())
+
+	# aggDetail = {}
+	# for taskName in taskNames:
+	# 	aggDetail[taskName] = 'sum'
+
+	# intacctGrouped = intacctPivot.groupby(['EmployeeName']).agg(aggDetail).reset_index()
+	# print(intacctGrouped)
+	# boylan = intacctGrouped.loc[intacctGrouped['EmployeeName'].str.contains('Boylan')]
+	# print(boylan)
+
 	tcpPivot = data.pivot_table(index=[
 		'Date', 'EmployeeName'
 	], columns='TaskName', values='Hours_TCP').reset_index()
@@ -61,6 +75,14 @@ if __name__ == '__main__':
 			tcpPivot[taskName] = 0
 		else:
 			tcpPivot[taskName] = tcpPivot[taskName].fillna(0)
+
+	# print(f'\n\nTCP Pivot:')
+	# print(tcpPivot.info())
+
+	# tcpGrouped = tcpPivot.groupby(['EmployeeName']).agg(aggDetail).reset_index()
+	# boylan2 = tcpGrouped.loc[tcpGrouped['EmployeeName'].str.contains('Boylan')]
+	# print(boylan2)
+	# exit()
 
 	joined = intacctPivot.join(tcpPivot.set_index(['Date', 'EmployeeName']), on=['Date', 'EmployeeName'], how='left', rsuffix='_TCP')
 	joined['Subtotal'] = joined[taskNames].sum(axis=1)

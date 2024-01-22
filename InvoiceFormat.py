@@ -575,6 +575,80 @@ def formatDetailTab(worksheet):
     sumColumn(worksheet, 'V', 'currency', start, stop, top=True)
     sumColumn(worksheet, 'W', 'currency', start, stop, top=True)
 
+def formatHoursTab(worksheet, approvers=None, locationName=None, billingFrom=None):
+    aboveRows = 3
+    worksheet.insert_rows(1, aboveRows)
+
+    styleColumn(worksheet, 'A', 'City')
+    styleColumn(worksheet, 'B', 'SubCLIN')
+    styleColumn(worksheet, 'C', 'Name')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Hours')
+    styleColumn(worksheet, 'F', 'Hours')
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+    styleColumn(worksheet, 'K', 'Hours')
+
+    start = 2 + aboveRows
+    stop = worksheet.max_row
+
+    # add SUM() formulas
+    sumColumn(worksheet, 'D', 'number', start, stop)
+    sumColumn(worksheet, 'E', 'number', start, stop)
+    sumColumn(worksheet, 'F', 'number', start, stop)
+    sumColumn(worksheet, 'G', 'number', start, stop)
+    sumColumn(worksheet, 'H', 'number', start, stop)
+    sumColumn(worksheet, 'I', 'number', start, stop)
+    sumColumn(worksheet, 'J', 'number', start, stop)
+    sumColumn(worksheet, 'K', 'number', start, stop)
+
+    logo = openpyxl.drawing.image.Image('logo-MEC.png')
+    worksheet.add_image(logo, 'A1')
+
+    for column in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']:
+        worksheet[column + str(start - 1)].style = 'summaryTitle'
+
+        for r in range(start - 2, stop):
+            worksheet[column + str(r + 1)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
+
+    signaturesRow = worksheet.max_row + 2
+    worksheet.merge_cells(f'B{signaturesRow}:E{signaturesRow}')
+    worksheet['B' + str(signaturesRow)].style = 'signatureLine'
+    worksheet['C' + str(signaturesRow)].style = 'signatureLine'
+    worksheet['D' + str(signaturesRow)].style = 'signatureLine'
+    worksheet['E' + str(signaturesRow)].style = 'signatureLine'
+
+    worksheet.merge_cells(f'G{signaturesRow}:K{signaturesRow}')
+    worksheet['G' + str(signaturesRow)].style = 'signatureLine'
+    worksheet['H' + str(signaturesRow)].style = 'signatureLine'
+    worksheet['I' + str(signaturesRow)].style = 'signatureLine'
+    worksheet['J' + str(signaturesRow)].style = 'signatureLine'
+    worksheet['K' + str(signaturesRow)].style = 'signatureLine'
+
+    signaturesRow += 1
+    worksheet.merge_cells(f'B{signaturesRow}:E{signaturesRow}')
+    worksheet['B' + str(signaturesRow)].style = 'boldTextCell'
+    worksheet['B' + str(signaturesRow)].value = approvers['MES']
+    worksheet.merge_cells(f'G{signaturesRow}:K{signaturesRow}')
+    worksheet['G' + str(signaturesRow)].value = approvers['COR']
+    worksheet['G' + str(signaturesRow)].style = 'boldTextCell'
+
+    if locationName is not None:
+        worksheet['E1'] = 'Location:'
+        worksheet['E1'].style = 'invoiceHeader'
+        worksheet['F1'] = locationName
+        worksheet['F1'].style = 'invoiceValue'
+
+    if billingFrom is not None:
+        worksheet['E2'] = 'Billing From:'
+        worksheet['E2'].style = 'invoiceHeader'
+        worksheet['F2'] = billingFrom
+        worksheet['F2'].style = 'invoiceValue'
+
+    worksheet.page_setup.orientation = worksheet.ORIENTATION_LANDSCAPE
+
 def formatFullDetailsTab(worksheet):
     worksheet.delete_cols(1, 1)
     worksheet.insert_rows(1, 1)
@@ -879,9 +953,13 @@ def formatJoinedPivotTab(worksheet, taskOffset):
     styleColumn(worksheet, 'X', 'Hours')
 
     # create a table
-    ref = f'$A$2:$X${worksheet.max_row}'
-    print(f'{worksheet.title} ref: {ref}')
-    table = Table(displayName=worksheet.title, ref=ref)
+    # ref = f'$A$2:$X${worksheet.max_row}'
+    # print(f'{worksheet.title} ref: {ref}')
+    # table = Table(displayName=worksheet.title, ref=ref)
+    # worksheet.add_table(table)
+    # worksheet.freeze_panes = worksheet['A3']
+
+    table = Table(displayName=worksheet.title, ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
     worksheet.add_table(table)
     worksheet.freeze_panes = worksheet['A3']
 
