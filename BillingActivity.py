@@ -35,9 +35,10 @@ RateTypes = {
 	'3326': 'Overtime',
 	'3320': 'Regular',
 	'3330': 'Regular',
-	'3331': 'Regular',
-	'3332': 'Regular',
-	'3333': 'Regular'
+	'3333': 'Regular',
+	'3329': 'NonBillable',
+	'3331': 'NonBillable',
+	'3332': 'NonBillable',
 }
 
 # from https://stackoverflow.com/questions/33470130/read-excel-xml-xls-file-with-pandas
@@ -169,7 +170,7 @@ class BillingActivity:
 			else:
 				pivot[taskName] = pivot[taskName].fillna(0)
 
-		pivot['HoursReg'] = pivot['Regular'] + pivot['LocalHoliday'] + pivot['Holiday'] + pivot['Vacation'] + pivot['Admin'] + pivot['Bereavement']
+		pivot['HoursReg'] = pivot['Regular'] + pivot['LocalHoliday'] + pivot['Admin']
 		pivot['HoursOT'] = pivot['Overtime'] + pivot['On-callOT'] + pivot['ScheduledOT'] + pivot['UnscheduledOT']
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
 		pivot['PostWages'] = pivot['Regular'] * pivot['HourlyRateReg'] # only use "Regular" hours for posting, not OT nor other type of regular hours
@@ -226,6 +227,10 @@ class BillingActivity:
 		if location is not None:
 			invoiceDetail = invoiceDetail.loc[invoiceDetail['Location'] == location]
 
+		## remove NonBillable entries
+		nonBillableTaskNames = ['Holiday', 'Vacation', 'Bereavement']
+		invoiceDetail = invoiceDetail.loc[~invoiceDetail['TaskName'].isin(nonBillableTaskNames)]
+		
 		invoiceDetail = invoiceDetail.groupby(['SubCLIN', 'Description', 'EmployeeName', 'Rate'], as_index=False).agg({'Hours': 'sum'})
 		invoiceDetail['Amount'] = invoiceDetail['Hours'] * invoiceDetail['Rate']
 		invoiceDetail = invoiceDetail[['SubCLIN', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount']]

@@ -198,7 +198,7 @@ if __name__ == '__main__':
 		else:
 			tcpPivot[taskName] = tcpPivot[taskName].fillna(0)
 
-	tcpPivot['HoursReg'] = tcpPivot['Regular'] + tcpPivot['LocalHoliday'] + tcpPivot['Bereavement'] + tcpPivot['Vacation'] + tcpPivot['Admin']
+	tcpPivot['HoursReg'] = tcpPivot['Regular'] + tcpPivot['LocalHoliday'] + tcpPivot['Admin']
 	tcpPivot['HoursOT'] = tcpPivot['Overtime'] + tcpPivot['On-callOT'] + tcpPivot['ScheduledOT'] + tcpPivot['UnscheduledOT']
 	tcpPivot['HoursTotal'] = tcpPivot['HoursReg'] + tcpPivot['HoursOT']
 

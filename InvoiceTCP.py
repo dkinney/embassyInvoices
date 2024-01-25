@@ -7,7 +7,7 @@ from BillingActivity import BillingActivity
 from InvoiceStyles import styles
 from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatHoursTab, formatDetailTab, formatSummaryTab
 
-versionString = 'v3'
+versionString = 'v4'
 
 Regions = {
 	'001': 'Asia',
@@ -134,8 +134,8 @@ def processActivityFromFile(filename):
 		with pd.ExcelWriter(hoursReportFile) as writer:
 			for location in locationInfo[clin]:
 				sheetName = f'Hours-{location}'
-				print(f'Writing hours for {location} into {sheetName}...')
-				print(data)
+				# print(f'Writing hours for {location} into {sheetName}...')
+				# print(data)
 				data = activity.groupedForHoursReport(clin=clin, location=location)
 				data.to_excel(writer, sheet_name=sheetName, startrow=0, startcol=0, header=True, index=False)
 
@@ -165,16 +165,16 @@ def processActivityFromFile(filename):
 		workbook.save(outputFile)
 
 		##########################################################
-		# Costs
+		# PostHazard Costs
 		##########################################################
 
-		outputFile = f'Costs-{startYear}{startMonth}-{region}-{versionString}.xlsx'
+		outputFile = f'PostHazard-{startYear}{startMonth}-{region}-{versionString}.xlsx'
 		costInvoiceNumber = f'SDEC-{startYear}{startMonth}'
 
 		sheetInfo = {}
 
 		with pd.ExcelWriter(outputFile) as writer:
-			sheetName = f'Costs-{region}'
+			sheetName = f'PostHazard-{region}'
 
 			costs = activity.groupedForCosts(clin=clin)
 			invoiceAmount = costs['Total'].sum()
