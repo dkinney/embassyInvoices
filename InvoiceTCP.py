@@ -7,7 +7,7 @@ from BillingActivity import BillingActivity
 from InvoiceStyles import styles
 from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatHoursTab, formatDetailTab, formatSummaryTab
 
-versionString = 'v4'
+versionString = 'v5'
 
 Regions = {
 	'001': 'Asia',
@@ -234,8 +234,7 @@ def processActivityFromFile(filename):
 		sheetName = f'Details-{region}'
 
 		with pd.ExcelWriter(outputFile) as writer:
-			details = activity.details(clin=clin)
-			details.drop(columns=['CLIN'], inplace=True)
+			details = activity.groupedForDetailsReport(clin=clin)		
 			details.to_excel(writer, sheet_name=sheetName, startrow=0, startcol=0, header=True)
 			
 		# Apply formatting in place
@@ -257,6 +256,10 @@ def showResult(resultDictionary):
 
 if __name__ == '__main__':
 	import sys
+
+	if len(sys.argv) < 2:
+		print(f'Usage: {sys.argv[0]} <billing activity file>')
+		sys.exit(1)
 
 	processed = []
 
@@ -284,7 +287,7 @@ if __name__ == '__main__':
 		'invoiceAmount': 'Invoice Amount'
 	}, inplace=True)
 
-	print(invoices)
+	# print(invoices)
 
 	now = pd.Timestamp.now().strftime("%Y%m%d%H%M")
 

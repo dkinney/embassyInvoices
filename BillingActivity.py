@@ -185,7 +185,7 @@ class BillingActivity:
 			'HourlyRateReg', 'PostWages', 'Posting', 'Hazard'
 		]]
 
-		pivot.sort_values(['Date', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName'], inplace=True)
+		# pivot.sort_values(['Date', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName'], inplace=True)
 
 		return pivot
 
@@ -307,6 +307,34 @@ class BillingActivity:
 		
 		return invoiceDetail
 
+	def groupedForDetailsReport(self, clin=None, location=None):
+		details = self.details(clin=clin, location=location)
+		details.drop(columns=['CLIN'], inplace=True)
+		# details.sort_values(['Date', 'EmployeeName'], inplace=True)
+
+		grouped = details.groupby(['EmployeeName', 'Date'], as_index=False).agg({
+			'Location': 'first',
+			'City': 'first',
+			'SubCLIN': 'first',
+			'Category': 'first',
+			'Regular': 'sum',
+			'LocalHoliday': 'sum',
+			'Admin': 'sum',
+			'Overtime': 'sum',
+			'On-callOT': 'sum',
+			'ScheduledOT': 'sum',
+			'UnscheduledOT': 'sum',
+			'HoursReg': 'sum',
+			'HoursOT': 'sum',
+			'HoursTotal': 'sum',
+			'HourlyRateReg': 'first',
+			'PostWages': 'sum',
+			'Posting': 'sum',
+			'Hazard': 'sum'
+		})
+
+		return grouped
+	
 if __name__ == '__main__':
 	import sys
 
@@ -323,6 +351,11 @@ if __name__ == '__main__':
 	print(f'\nInvoice Details:')
 	print(f'Date range: {activity.dateStart} to {activity.dateEnd}')
 	print(activity.data)
+
+	print(f'DEBUG:')
+	debug = activity.groupedForDetailsReport(clin='001')
+	print(debug)
+	exit()
 
 	print(f'\nInvoice Hours Report:')
 	hours = activity.groupedForHoursReport(clin='002', location='Ukraine')

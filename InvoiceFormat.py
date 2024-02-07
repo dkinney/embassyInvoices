@@ -13,6 +13,7 @@ thinSide = Side(style='thin', color="000000")
 thickSide = Side(style='thin', color="000000")
 yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
 orange = PatternFill(start_color='FFA500', end_color='FFA500', fill_type='solid')
+gray = PatternFill(start_color='D3D3D3', end_color='D3D3D3', fill_type='solid')
 
 dataStyles = {
     'CLIN': {
@@ -522,12 +523,12 @@ def formatDetailTab(worksheet):
     worksheet.delete_cols(1, 1)
     worksheet.insert_rows(1, 1)
 
-    styleColumn(worksheet, 'A', 'Date')
-    styleColumn(worksheet, 'B', 'CLIN')
-    styleColumn(worksheet, 'C', 'City')
-    styleColumn(worksheet, 'D', 'SubCLIN')
-    styleColumn(worksheet, 'E', 'Category')
-    styleColumn(worksheet, 'F', 'Name')
+    styleColumn(worksheet, 'A', 'Name')
+    styleColumn(worksheet, 'B', 'Date')
+    styleColumn(worksheet, 'C', 'Location')
+    styleColumn(worksheet, 'D', 'City')
+    styleColumn(worksheet, 'E', 'SubCLIN')
+    styleColumn(worksheet, 'F', 'Category')
 
     styleColumn(worksheet, 'G', 'Hours')
     styleColumn(worksheet, 'H', 'Hours')
@@ -540,15 +541,11 @@ def formatDetailTab(worksheet):
     styleColumn(worksheet, 'N', 'Hours')
     styleColumn(worksheet, 'O', 'Hours')
     styleColumn(worksheet, 'P', 'Hours')
-
-    styleColumn(worksheet, 'Q', 'Hours')
-    styleColumn(worksheet, 'R', 'Hours')
-    styleColumn(worksheet, 'S', 'Hours')
     
-    styleColumn(worksheet, 'T', 'Rate')
-    styleColumn(worksheet, 'U', 'Total')
-    styleColumn(worksheet, 'V', 'Total')
-    styleColumn(worksheet, 'W', 'Total')
+    styleColumn(worksheet, 'Q', 'Rate')
+    styleColumn(worksheet, 'R', 'Total')
+    styleColumn(worksheet, 'S', 'Total')
+    styleColumn(worksheet, 'T', 'Total')
 
     # create a table
     table = Table(displayName='Detail', ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
@@ -568,12 +565,14 @@ def formatDetailTab(worksheet):
     sumColumn(worksheet, 'N', 'number', start, stop, top=True)
     sumColumn(worksheet, 'O', 'number', start, stop, top=True)
     sumColumn(worksheet, 'P', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'Q', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'R', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'S', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'U', 'currency', start, stop, top=True)
-    sumColumn(worksheet, 'V', 'currency', start, stop, top=True)
-    sumColumn(worksheet, 'W', 'currency', start, stop, top=True)
+    sumColumn(worksheet, 'R', 'currency', start, stop, top=True)
+    sumColumn(worksheet, 'S', 'currency', start, stop, top=True)
+    sumColumn(worksheet, 'T', 'currency', start, stop, top=True)
+
+    # add a fill for columns Q, R, S to show that they are are summary columns
+    for column in ['N', 'O', 'P']:
+        for row in range(1, stop):
+            worksheet[column][row].fill = gray
 
 def formatHoursTab(worksheet, approvers=None, locationName=None, billingFrom=None):
     aboveRows = 3
@@ -1085,3 +1084,85 @@ def formatJoinTab(worksheet):
         if worksheet[f'B{row}'].value != worksheet[f'C{row}'].value:
             worksheet[f'B{row}'].fill = yellow
             worksheet[f'C{row}'].fill = yellow
+
+def formatTimeByDate(worksheet):
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'Location')
+    styleColumn(worksheet, 'B', 'Date')
+    styleColumn(worksheet, 'C', 'Name')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Hours')
+    styleColumn(worksheet, 'F', 'Hours')
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+    styleColumn(worksheet, 'K', 'Hours')
+    styleColumn(worksheet, 'L', 'Hours')
+    styleColumn(worksheet, 'M', 'Hours')
+    styleColumn(worksheet, 'N', 'Hours')
+    styleColumn(worksheet, 'O', 'Hours')
+    styleColumn(worksheet, 'P', 'Hours')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:P" + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'F', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'G', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'H', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'I', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'J', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'K', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'L', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'M', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'N', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'O', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'P', 'number', start, stop, top=True)
+
+def formatTimeByEmployee(worksheet):
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'Location')
+    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'C', 'Hours')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Hours')
+    styleColumn(worksheet, 'F', 'Hours')
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+    styleColumn(worksheet, 'K', 'Hours')
+    styleColumn(worksheet, 'L', 'Hours')
+    styleColumn(worksheet, 'M', 'Hours')
+    styleColumn(worksheet, 'N', 'Hours')
+    styleColumn(worksheet, 'O', 'Hours')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:O" + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'F', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'G', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'H', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'I', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'J', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'K', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'L', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'M', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'N', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'O', 'number', start, stop, top=True)
