@@ -171,10 +171,10 @@ def processActivityFromFile(filename):
 			worksheet = hoursWorkbook[f'Hours-{location}']
 			formatHoursTab(worksheet, 
 				  approvers=CountryApprovers[location], 
-				  locationName=location, billingFrom=activity.billingPeriod())
+				  locationName=location, invoiceNumber=invoiceNumber, billingFrom=activity.billingPeriod())
 			
 			worksheet = hoursWorkbook[f'Details-{location}']
-			formatHoursDetailsTab(worksheet, locationName=location, billingFrom=activity.billingPeriod())
+			formatHoursDetailsTab(worksheet, locationName=location, invoiceNumber=invoiceNumber, billingFrom=activity.billingPeriod())
 		
 		hoursWorkbook.save(hoursReportFile)
 		
