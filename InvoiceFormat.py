@@ -637,21 +637,21 @@ def formatHoursTab(worksheet, approvers=None, invoiceNumber=None, locationName=N
     worksheet['G' + str(signaturesRow)].value = approvers['COR']
     worksheet['G' + str(signaturesRow)].style = 'boldTextCell'
 
-    if locationName is not None:
-        worksheet['G1'] = 'Location:'
-        worksheet['G1'].style = 'invoiceHeader'
-        worksheet['H1'] = locationName
-        worksheet['H1'].style = 'invoiceValue'
-
     if invoiceNumber is None:
-        worksheet['G2'] = 'Invoice Date:'
-        worksheet['H2'] = processingDate
+        worksheet['G1'] = 'Invoice Date:'
+        worksheet['H1'] = processingDate
     else:
-        worksheet['G2'] = 'Invoice Number:'
-        worksheet['H2'] = invoiceNumber
-        
-    worksheet['G2'].style = 'invoiceHeader'
-    worksheet['H2'].style = 'invoiceValue'
+        worksheet['G1'] = 'Invoice Number:'
+        worksheet['H1'] = invoiceNumber
+
+    worksheet['G1'].style = 'invoiceHeader'
+    worksheet['H1'].style = 'invoiceValue'
+
+    if locationName is not None:
+        worksheet['G2'] = 'Location:'
+        worksheet['G2'].style = 'invoiceHeader'
+        worksheet['H2'] = locationName
+        worksheet['H2'].style = 'invoiceValue'
 
     if billingFrom is not None:
         worksheet['G3'] = 'Billing From:'
@@ -698,21 +698,21 @@ def formatHoursDetailsTab(worksheet, locationName=None, invoiceNumber=None, bill
         for r in range(start - 2, stop):
             worksheet[column + str(r + 1)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
 
-    if locationName is not None:
-        worksheet['G1'] = 'Location:'
-        worksheet['G1'].style = 'invoiceHeader'
-        worksheet['H1'] = locationName
-        worksheet['H1'].style = 'invoiceValue'
-
     if invoiceNumber is None:
-        worksheet['G2'] = 'Invoice Date:'
-        worksheet['H2'] = processingDate
+        worksheet['G1'] = 'Invoice Date:'
+        worksheet['H1'] = processingDate
     else:
-        worksheet['G2'] = 'Invoice Number:'
-        worksheet['H2'] = invoiceNumber
+        worksheet['G1'] = 'Invoice Number:'
+        worksheet['H1'] = invoiceNumber
 
-    worksheet['G2'].style = 'invoiceHeader'
-    worksheet['H2'].style = 'invoiceValue'
+    worksheet['G1'].style = 'invoiceHeader'
+    worksheet['H1'].style = 'invoiceValue'
+
+    if locationName is not None:
+        worksheet['G2'] = 'Location:'
+        worksheet['G2'].style = 'invoiceHeader'
+        worksheet['H2'] = locationName
+        worksheet['H2'].style = 'invoiceValue'
 
     if billingFrom is not None:
         worksheet['G3'] = 'Billing From:'
