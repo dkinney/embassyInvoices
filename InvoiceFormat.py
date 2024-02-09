@@ -643,21 +643,21 @@ def formatHoursTab(worksheet, approvers=None, invoiceNumber=None, locationName=N
         worksheet['H1'] = locationName
         worksheet['H1'].style = 'invoiceValue'
 
-    if billingFrom is not None:
-        worksheet['G2'] = 'Billing From:'
-        worksheet['G2'].style = 'invoiceHeader'
-        worksheet['H2'] = billingFrom
-        worksheet['H2'].style = 'invoiceValue'
-
     if invoiceNumber is None:
-        worksheet['G3'] = 'Invoice Date:'
-        worksheet['H3'] = processingDate
+        worksheet['G2'] = 'Invoice Date:'
+        worksheet['H2'] = processingDate
     else:
-        worksheet['G3'] = 'Invoice Number:'
-        worksheet['H3'] = invoiceNumber
+        worksheet['G2'] = 'Invoice Number:'
+        worksheet['H2'] = invoiceNumber
         
-    worksheet['G3'].style = 'invoiceHeader'
-    worksheet['H3'].style = 'invoiceValue'
+    worksheet['G2'].style = 'invoiceHeader'
+    worksheet['H2'].style = 'invoiceValue'
+
+    if billingFrom is not None:
+        worksheet['G3'] = 'Billing From:'
+        worksheet['G3'].style = 'invoiceHeader'
+        worksheet['H3'] = billingFrom
+        worksheet['H3'].style = 'invoiceValue'
 
     worksheet.page_setup.orientation = worksheet.ORIENTATION_LANDSCAPE
 
@@ -704,21 +704,21 @@ def formatHoursDetailsTab(worksheet, locationName=None, invoiceNumber=None, bill
         worksheet['H1'] = locationName
         worksheet['H1'].style = 'invoiceValue'
 
-    if billingFrom is not None:
-        worksheet['G2'] = 'Billing From:'
-        worksheet['G2'].style = 'invoiceHeader'
-        worksheet['H2'] = billingFrom
-        worksheet['H2'].style = 'invoiceValue'
-
     if invoiceNumber is None:
-        worksheet['G3'] = 'Invoice Date:'
-        worksheet['H3'] = processingDate
+        worksheet['G2'] = 'Invoice Date:'
+        worksheet['H2'] = processingDate
     else:
-        worksheet['G3'] = 'Invoice Number:'
-        worksheet['H3'] = invoiceNumber
+        worksheet['G2'] = 'Invoice Number:'
+        worksheet['H2'] = invoiceNumber
 
-    worksheet['G3'].style = 'invoiceHeader'
-    worksheet['H3'].style = 'invoiceValue'
+    worksheet['G2'].style = 'invoiceHeader'
+    worksheet['H2'].style = 'invoiceValue'
+
+    if billingFrom is not None:
+        worksheet['G3'] = 'Billing From:'
+        worksheet['G3'].style = 'invoiceHeader'
+        worksheet['H3'] = billingFrom
+        worksheet['H3'].style = 'invoiceValue'
     
     worksheet.page_setup.orientation = worksheet.ORIENTATION_LANDSCAPE
 

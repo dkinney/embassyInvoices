@@ -169,6 +169,8 @@ def processActivityFromFile(filename):
 
 		for location in locationInfo[clin]:
 			worksheet = hoursWorkbook[f'Hours-{location}']
+			invoiceNumber = laborInvoiceNumber + CountryCodes[location]
+			
 			formatHoursTab(worksheet, 
 				  approvers=CountryApprovers[location], 
 				  locationName=location, invoiceNumber=invoiceNumber, billingFrom=activity.billingPeriod())
