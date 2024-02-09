@@ -9,6 +9,9 @@ from openpyxl.styles import Border, Side, PatternFill
 
 from InvoiceStyles import styles
 
+contractNumber = '19AQMM23C0047'
+processingDate = datetime.datetime.now().strftime('%d %b %Y')
+
 thinSide = Side(style='thin', color="000000")
 thickSide = Side(style='thin', color="000000")
 yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
@@ -322,7 +325,7 @@ def formatInvoiceTab(worksheet, sheetInfo):
 
     worksheet['D3'] = 'Invoice Date:'
     worksheet['D3'].style = 'invoiceHeader'
-    worksheet['E3'] = datetime.datetime.now().strftime('%d %b %Y')
+    worksheet['E3'] = processingDate
     worksheet['E3'].style = 'invoiceValue'
     worksheet['D4'] = 'Invoice Number:'
     worksheet['D4'].style = 'invoiceHeader'
@@ -335,7 +338,7 @@ def formatInvoiceTab(worksheet, sheetInfo):
     worksheet['E5'].style = 'invoiceAmount'
     worksheet['D6'] = 'Contract Number:'
     worksheet['D6'].style = 'invoiceHeader'
-    worksheet['E6'] = '19AQMM23C0047'
+    worksheet['E6'] = contractNumber
     worksheet['E6'].style = 'invoiceValue'
     worksheet['D7'] = 'Task Order:'
     worksheet['D7'].style = 'invoiceHeader'
@@ -451,7 +454,7 @@ def formatCostsTab(worksheet, sheetInfo):
     worksheet['E5'].style = 'invoiceAmount'
     worksheet['D6'] = 'Contract Number:'
     worksheet['D6'].style = 'invoiceHeader'
-    worksheet['E6'] = '19AQMM23C0047'
+    worksheet['E6'] = contractNumber
     worksheet['E6'].style = 'invoiceValue'
     worksheet['D7'] = 'Task Order:'
     worksheet['D7'].style = 'invoiceHeader'
@@ -635,17 +638,78 @@ def formatHoursTab(worksheet, approvers=None, locationName=None, billingFrom=Non
     worksheet['G' + str(signaturesRow)].style = 'boldTextCell'
 
     if locationName is not None:
-        worksheet['E1'] = 'Location:'
-        worksheet['E1'].style = 'invoiceHeader'
-        worksheet['F1'] = locationName
-        worksheet['F1'].style = 'invoiceValue'
+        worksheet['G1'] = 'Location:'
+        worksheet['G1'].style = 'invoiceHeader'
+        worksheet['H1'] = locationName
+        worksheet['H1'].style = 'invoiceValue'
 
     if billingFrom is not None:
-        worksheet['E2'] = 'Billing From:'
-        worksheet['E2'].style = 'invoiceHeader'
-        worksheet['F2'] = billingFrom
-        worksheet['F2'].style = 'invoiceValue'
+        worksheet['G2'] = 'Billing From:'
+        worksheet['G2'].style = 'invoiceHeader'
+        worksheet['H2'] = billingFrom
+        worksheet['H2'].style = 'invoiceValue'
 
+    worksheet['G3'] = 'Invoice Date:'
+    worksheet['G3'].style = 'invoiceHeader'
+    worksheet['H3'] = processingDate
+    worksheet['H3'].style = 'invoiceValue'
+
+    worksheet.page_setup.orientation = worksheet.ORIENTATION_LANDSCAPE
+
+def formatHoursDetailsTab(worksheet, locationName=None, billingFrom=None):
+    aboveRows = 3
+    worksheet.insert_rows(1, aboveRows)
+
+    styleColumn(worksheet, 'A', 'Date')
+    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'C', 'Hours')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Hours')
+    styleColumn(worksheet, 'F', 'Hours')
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+
+    start = 2 + aboveRows
+    stop = worksheet.max_row
+
+    # add SUM() formulas
+    sumColumn(worksheet, 'C', 'number', start, stop)
+    sumColumn(worksheet, 'D', 'number', start, stop)
+    sumColumn(worksheet, 'E', 'number', start, stop)
+    sumColumn(worksheet, 'F', 'number', start, stop)
+    sumColumn(worksheet, 'G', 'number', start, stop)
+    sumColumn(worksheet, 'H', 'number', start, stop)
+    sumColumn(worksheet, 'I', 'number', start, stop)
+    sumColumn(worksheet, 'J', 'number', start, stop)
+
+    logo = openpyxl.drawing.image.Image('logo-MEC.png')
+    worksheet.add_image(logo, 'A1')
+
+    for column in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']:
+        worksheet[column + str(start - 1)].style = 'summaryTitle'
+
+        for r in range(start - 2, stop):
+            worksheet[column + str(r + 1)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
+
+    if locationName is not None:
+        worksheet['G1'] = 'Location:'
+        worksheet['G1'].style = 'invoiceHeader'
+        worksheet['H1'] = locationName
+        worksheet['H1'].style = 'invoiceValue'
+
+    if billingFrom is not None:
+        worksheet['G2'] = 'Billing From:'
+        worksheet['G2'].style = 'invoiceHeader'
+        worksheet['H2'] = billingFrom
+        worksheet['H2'].style = 'invoiceValue'
+
+    worksheet['G3'] = 'Invoice Date:'
+    worksheet['G3'].style = 'invoiceHeader'
+    worksheet['H3'] = processingDate
+    worksheet['H3'].style = 'invoiceValue'
+    
     worksheet.page_setup.orientation = worksheet.ORIENTATION_LANDSCAPE
 
 def formatFullDetailsTab(worksheet):
@@ -1154,6 +1218,7 @@ def formatTimeByEmployee(worksheet):
     # add SUM() formulas
     start = 3
     stop = worksheet.max_row
+    sumColumn(worksheet, 'C', 'number', start, stop, top=True)
     sumColumn(worksheet, 'D', 'number', start, stop, top=True)
     sumColumn(worksheet, 'E', 'number', start, stop, top=True)
     sumColumn(worksheet, 'F', 'number', start, stop, top=True)

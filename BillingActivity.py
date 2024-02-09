@@ -348,36 +348,7 @@ if __name__ == '__main__':
 
 	activity = BillingActivity(activityFilename, verbose=False)
 
-	print(f'\nInvoice Details:')
-	print(f'Date range: {activity.dateStart} to {activity.dateEnd}')
+	print('Billing Activity')
+	print(activity.data.info())
 	print(activity.data)
-
-	print(f'DEBUG:')
-	debug = activity.groupedForDetailsReport(clin='001')
-	print(debug)
-	exit()
-
-	print(f'\nInvoice Hours Report:')
-	hours = activity.groupedForHoursReport(clin='002', location='Ukraine')
-	print(hours)
-
-	exit()
-
-	now = pd.Timestamp.now().strftime("%Y%m%d%H%M")
-	outputFile = f'BillingActivity-{now}.xlsx'
-
-	with pd.ExcelWriter(outputFile) as writer:
-			activity.data.to_excel(writer, sheet_name='Details', index=False)
-
-	# Apply formatting in place
-	workbook = load_workbook(outputFile)
-
-	for styleName in styles.keys():
-			workbook.add_named_style(styles[styleName])
-		
-	worksheet = workbook['Details']
-	formatActivityDataTab(worksheet)
-
-	workbook.save(outputFile)
-	print(f'Wrote {outputFile}')
-
+	

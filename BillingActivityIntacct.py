@@ -101,7 +101,13 @@ class BillingActivityIntacct:
 				print(f'Parsing billing data from {filename}')
 
 			# we get data from Intacct in an CSV format
-			df = pd.read_csv(filename, header=0, dtype=str)
+			# df = pd.read_csv(filename, header=0, dtype=str)
+			df = pd.read_excel(filename, header=0, dtype=str)
+
+			print(f'---------------------------------------------------')
+			print(df.info())
+			print(df)
+			print(f'---------------------------------------------------')
 
 			# drop unused columns
 			if 'd' in df.columns:
