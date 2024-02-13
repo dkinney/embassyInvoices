@@ -246,6 +246,9 @@ class EmployeeTime:
 		if location is not None:
 			invoiceDetail = invoiceDetail.loc[invoiceDetail['Location'] == location]
 
+		# debug - print the info for SubCLIN 0327
+		# print(invoiceDetail.loc[invoiceDetail['SubCLIN'] == '0327'])
+
 		invoiceDetail = invoiceDetail.groupby(['SubCLIN', 'Description', 'EmployeeName', 'Rate'], as_index=False).agg({'Hours': 'sum'})
 		invoiceDetail['Amount'] = invoiceDetail['Hours'] * invoiceDetail['Rate']
 		invoiceDetail = invoiceDetail[['SubCLIN', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount']]
