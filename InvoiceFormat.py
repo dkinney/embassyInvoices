@@ -17,6 +17,7 @@ thickSide = Side(style='thin', color="000000")
 yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
 orange = PatternFill(start_color='FFA500', end_color='FFA500', fill_type='solid')
 gray = PatternFill(start_color='D3D3D3', end_color='D3D3D3', fill_type='solid')
+blue = PatternFill(start_color='21A7F2', end_color='21A7F2', fill_type='solid')
 
 dataStyles = {
     'CLIN': {
@@ -49,6 +50,10 @@ dataStyles = {
     },
     'Name': {
         'width': 18,
+        'style': 'defaultCell'
+    },
+    'State': {
+        'width': 10,
         'style': 'defaultCell'
     },
     'Number': {
@@ -262,6 +267,13 @@ def styleColumn(worksheet, column, type, rowStart = None, rowStop = None):
         worksheet.column_dimensions[column].width = width
     else:
         worksheet[column + str(rowStart + 1)].style = 'summaryTitle'
+
+def highlightRow(worksheet, row, color = blue, colStart = None, colStop = None):
+    start = 1 if colStart is None else colStart
+    stop = worksheet.max_column + 1 if colStop is None else colStop
+
+    for col in range(start, stop):
+        worksheet.cell(row=row, column=col).fill = color
 
 def styleRow(worksheet, row, style):
     for column in range(1, worksheet.max_column):
@@ -1159,12 +1171,69 @@ def formatJoinTab(worksheet):
             worksheet[f'B{row}'].fill = yellow
             worksheet[f'C{row}'].fill = yellow
 
+
+
 def formatTimeByDate(worksheet):
     worksheet.insert_rows(1, 1)
 
     styleColumn(worksheet, 'A', 'Location')
     styleColumn(worksheet, 'B', 'Date')
     styleColumn(worksheet, 'C', 'Name')
+    styleColumn(worksheet, 'D', 'State')
+    styleColumn(worksheet, 'E', 'Hours')
+    styleColumn(worksheet, 'F', 'Hours')
+    styleColumn(worksheet, 'G', 'Hours')
+    styleColumn(worksheet, 'H', 'Hours')
+    styleColumn(worksheet, 'I', 'Hours')
+    styleColumn(worksheet, 'J', 'Hours')
+    styleColumn(worksheet, 'K', 'Hours')
+    styleColumn(worksheet, 'L', 'Hours')
+    styleColumn(worksheet, 'M', 'Hours')
+    styleColumn(worksheet, 'N', 'Hours')
+    styleColumn(worksheet, 'O', 'Hours')
+    styleColumn(worksheet, 'P', 'Hours')
+    styleColumn(worksheet, 'Q', 'Hours')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A2:P" + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
+
+    # add SUM() formulas
+    start = 3
+    stop = worksheet.max_row
+    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'F', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'G', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'H', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'I', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'J', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'K', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'L', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'M', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'N', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'O', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'P', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'Q', 'number', start, stop, top=True)
+
+    for row in range(3, stop):
+        if worksheet[f'D{row}'].value == "Approved":
+            pass
+        elif worksheet[f'D{row}'].value == "Submitted":
+            highlightRow(worksheet, row, color=yellow)
+        elif worksheet[f'D{row}'].value == "Draft":
+            highlightRow(worksheet, row, color=gray) 
+        elif worksheet[f'D{row}'].value == "Declined":
+            highlightRow(worksheet, row, color=orange)  
+        else:
+            highlightRow(worksheet, row)
+
+def formatTimeByEmployee(worksheet):
+    worksheet.insert_rows(1, 1)
+
+    styleColumn(worksheet, 'A', 'Location')
+    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'C', 'State')
     styleColumn(worksheet, 'D', 'Hours')
     styleColumn(worksheet, 'E', 'Hours')
     styleColumn(worksheet, 'F', 'Hours')
@@ -1180,7 +1249,7 @@ def formatTimeByDate(worksheet):
     styleColumn(worksheet, 'P', 'Hours')
 
     # create a table
-    table = Table(displayName=worksheet.title, ref="A2:P" + str(worksheet.max_row))
+    table = Table(displayName=worksheet.title, ref="A2:O" + str(worksheet.max_row))
     worksheet.add_table(table)
     worksheet.freeze_panes = worksheet['A3']
 
@@ -1201,43 +1270,14 @@ def formatTimeByDate(worksheet):
     sumColumn(worksheet, 'O', 'number', start, stop, top=True)
     sumColumn(worksheet, 'P', 'number', start, stop, top=True)
 
-def formatTimeByEmployee(worksheet):
-    worksheet.insert_rows(1, 1)
-
-    styleColumn(worksheet, 'A', 'Location')
-    styleColumn(worksheet, 'B', 'Name')
-    styleColumn(worksheet, 'C', 'Hours')
-    styleColumn(worksheet, 'D', 'Hours')
-    styleColumn(worksheet, 'E', 'Hours')
-    styleColumn(worksheet, 'F', 'Hours')
-    styleColumn(worksheet, 'G', 'Hours')
-    styleColumn(worksheet, 'H', 'Hours')
-    styleColumn(worksheet, 'I', 'Hours')
-    styleColumn(worksheet, 'J', 'Hours')
-    styleColumn(worksheet, 'K', 'Hours')
-    styleColumn(worksheet, 'L', 'Hours')
-    styleColumn(worksheet, 'M', 'Hours')
-    styleColumn(worksheet, 'N', 'Hours')
-    styleColumn(worksheet, 'O', 'Hours')
-
-    # create a table
-    table = Table(displayName=worksheet.title, ref="A2:O" + str(worksheet.max_row))
-    worksheet.add_table(table)
-    worksheet.freeze_panes = worksheet['A3']
-
-    # add SUM() formulas
-    start = 3
-    stop = worksheet.max_row
-    sumColumn(worksheet, 'C', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'E', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'F', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'G', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'H', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'I', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'J', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'K', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'L', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'M', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'N', 'number', start, stop, top=True)
-    sumColumn(worksheet, 'O', 'number', start, stop, top=True)
+    for row in range(3, stop):
+        if worksheet[f'C{row}'].value == "Approved":
+            pass
+        elif worksheet[f'C{row}'].value == "Submitted":
+            highlightRow(worksheet, row, color=yellow)
+        elif worksheet[f'C{row}'].value == "Draft":
+            highlightRow(worksheet, row, color=gray)
+        elif worksheet[f'C{row}'].value == "Declined":
+            highlightRow(worksheet, row, color=orange)  
+        else:
+            highlightRow(worksheet, row)

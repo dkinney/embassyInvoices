@@ -111,7 +111,7 @@ class EmployeeTime:
 			}
 		
 			df = pd.read_excel(filename, header=5, converters=converters)
-			df.columns = ['EmployeeName', 'Date', 'Description', 'TaskName', 'Hours']
+			df.columns = ['EmployeeName', 'Date', 'Description', 'TaskName', 'Hours', 'State']
 
 			# fill down the missing EmployeeName values
 			df['EmployeeName'] = df['EmployeeName'].fillna(method='ffill')
@@ -158,7 +158,7 @@ class EmployeeTime:
 		joined['SubCLIN'] = joined['SubCLIN'].str.replace('X', baseYear)
 
 		# reorder the columns to be more useful
-		joined = joined[['Date', 'CLIN', 'Region', 'Location', 'City', 'SubCLIN', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate']]
+		joined = joined[['Date', 'CLIN', 'Region', 'Location', 'City', 'SubCLIN', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'State', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate']]
 		self.data = joined
 
 	def details(self, clin=None, location=None):
@@ -354,9 +354,9 @@ class EmployeeTime:
 		return grouped
 	
 	def byEmployee(self):
-		grouped = self.data.groupby(['Region', 'EmployeeName', 'TaskName'], as_index=False).agg({'Hours': 'sum'})
+		grouped = self.data.groupby(['Region', 'EmployeeName', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
-		pivot = grouped.pivot_table(index=['Region', 'EmployeeName'], columns='TaskName', values='Hours').reset_index()
+		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'State'], columns='TaskName', values='Hours').reset_index()
 
 		for taskName in TaskNames.values():
 			if taskName not in pivot.columns:
@@ -369,7 +369,7 @@ class EmployeeTime:
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
 
 		pivot = pivot[[
-			'Region', 'EmployeeName',
+			'Region', 'EmployeeName', 'State',
 			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal'
@@ -385,10 +385,10 @@ class EmployeeTime:
 
 		if location is not None:
 			df = df.loc[df['Location'] == location]
-		
-		grouped = df.groupby(['Region', 'EmployeeName', 'Date', 'TaskName'], as_index=False).agg({'Hours': 'sum'})
 
-		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'Date'], columns='TaskName', values='Hours').reset_index()
+		grouped = df.groupby(['Region', 'EmployeeName', 'Date', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
+
+		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'Date', 'State'], columns='TaskName', values='Hours').reset_index()
 
 		for taskName in TaskNames.values():
 			if taskName not in pivot.columns:
@@ -401,7 +401,7 @@ class EmployeeTime:
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
 
 		pivot = pivot[[
-			'Region', 'Date', 'EmployeeName',
+			'Region', 'Date', 'EmployeeName', 'State',
 			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal'
@@ -422,13 +422,13 @@ if __name__ == '__main__':
 		print(f'Usage: {sys.argv[0]} <activity file>')
 		exit()
 
-	time = EmployeeTime(activityFilename, verbose=False)
+	time = EmployeeTime(activityFilename, verbose=True)
 	time.joinWith(billingRates)
 
 	data = time.groupedForInvoicing(clin='002', location='NATO')
-	now = pd.Timestamp.now().strftime("%Y%m%d%H%M")
+	now = pd.Timestamp.now().strftime("%m%d%H%M")
 
-	outputFile = f'EmployeeTime-{time.startYear()}{time.startMonth()}-{now}.xlsx'
+	outputFile = f'Status-{time.startYear()}{time.startMonth()}-{now}.xlsx'
 
 	timeByDate = time.byDate()
 	timeByEmployee = time.byEmployee()
