@@ -534,6 +534,9 @@ def formatCostsTab(worksheet, sheetInfo):
     worksheet['F' + str(row)] = 'Total'
     worksheet['F' + str(row)].style = 'summaryTitle'
 
+    # format the summary detail area
+
+
 def formatDetailTab(worksheet):
     worksheet.delete_cols(1, 1)
     worksheet.insert_rows(1, 1)
@@ -600,13 +603,11 @@ def formatPostDetails(worksheet, title, startRow, detailRows, spaceToSummary = 2
     styleColumn(worksheet, 'F', 'Total')
     styleColumn(worksheet, 'G', 'Post Rate')
     styleColumn(worksheet, 'H', 'Total')
-    styleColumn(worksheet, 'I', 'Hazard Rate')
-    styleColumn(worksheet, 'J', 'Total')
 
     logo = openpyxl.drawing.image.Image('logo-MEC.png')
     worksheet.add_image(logo, 'A1')
 
-    worksheet.merge_cells('D2:J2')
+    worksheet.merge_cells('D2:H2')
     worksheet['D2'] = title
     worksheet['D2'].style = 'invoiceSummaryText'
     worksheet['D2'].alignment = Alignment(horizontal='center')
@@ -614,9 +615,8 @@ def formatPostDetails(worksheet, title, startRow, detailRows, spaceToSummary = 2
     # add SUM() formulas
     stop = startRow + detailRows + 1
     sumColumn(worksheet, 'H', 'currency', startRow + 1, stop)
-    sumColumn(worksheet, 'J', 'currency', startRow + 1, stop)
 
-    for column in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']:
+    for column in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
         worksheet[f'{column}{startRow + 1}'].style = 'summaryTitle'
 
         for r in range(startRow, stop):
@@ -625,9 +625,8 @@ def formatPostDetails(worksheet, title, startRow, detailRows, spaceToSummary = 2
     start = startRow + detailRows + spaceToSummary
     stop = start + summaryRows
     sumColumn(worksheet, 'H', 'currency', start + 1, stop)
-    sumColumn(worksheet, 'J', 'currency', start + 1, stop)
 
-    for column in ['F', 'G', 'H', 'J']:
+    for column in ['F', 'G', 'H']:
         worksheet[f'{column}{startRow + 1}'].style = 'summaryTitle'
 
         for r in range(start, stop):

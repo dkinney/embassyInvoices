@@ -318,9 +318,16 @@ class EmployeeTime:
 		if clin is not None:
 			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
 
-		summary = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Posting': 'sum', 'Hazard': 'sum'})
-		summary['Spacer'] = ''
-		summary = summary[['City', 'Location', 'Posting', 'Spacer', 'Hazard']]
+		summary = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Posting': 'sum'})
+		return summary
+
+	def hazardSummaryByCity(self, clin=None):
+		costDetail = self.details()
+
+		if clin is not None:
+			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
+
+		summary = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Hazard': 'sum'})
 		return summary
 
 	def groupedForHoursReport(self, clin=None, location=None):
@@ -405,7 +412,38 @@ class EmployeeTime:
 			'HourlyRateReg': 'first',
 			'RegularWages': 'sum',
 			'PostingRate': 'first',
-			'Posting': 'sum',
+			'Posting': 'sum'
+		})
+
+		# reorder the columns to be more useful
+		grouped = grouped[[
+			'City', 'SubCLIN', 'EmployeeName',
+			'Regular', 'HourlyRateReg', 'RegularWages', 
+			'PostingRate', 'Posting'
+		]]
+
+		# rename columns to be more readable
+		grouped.rename(columns={
+			'SubCLIN': 'CLIN',
+			'EmployeeName': 'Name',
+			'HourlyRateReg': 'Rate',
+			'RegularWages': 'Regular Wages',
+			'PostingRate': 'Post Rate',
+			'Posting': 'Post'
+		}, inplace=True)
+
+		return grouped
+	
+	def groupedForHazardReport(self, clin=None, location=None):
+		details = self.details(clin=clin, location=location)
+		details.drop(columns=['CLIN'], inplace=True)
+
+		grouped = details.groupby(['SubCLIN', 'EmployeeName'], as_index=False).agg({
+			'Location': 'first',
+			'City': 'first',
+			'Regular': 'sum',
+			'HourlyRateReg': 'first',
+			'RegularWages': 'sum',
 			'HazardRate': 'first',
 			'Hazard': 'sum'
 		})
@@ -414,9 +452,20 @@ class EmployeeTime:
 		grouped = grouped[[
 			'City', 'SubCLIN', 'EmployeeName',
 			'Regular', 'HourlyRateReg', 'RegularWages', 
-			'PostingRate', 'Posting',
 			'HazardRate', 'Hazard'
 		]]
+
+		# rename columns to be more readable
+		grouped.rename(columns={
+			'SubCLIN': 'CLIN',
+			'EmployeeName': 'Name',
+			'HourlyRateReg': 'Rate',
+			'RegularWages': 'Regular Wages',
+			'HazardRate': 'Hazard Rate'
+		}, inplace=True)
+
+		# drop rows where the Hazard is zero
+		grouped = grouped.loc[grouped['Hazard'] > 0]
 
 		return grouped
 	

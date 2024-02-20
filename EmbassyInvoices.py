@@ -209,11 +209,17 @@ def processActivityFromFile(filename):
 
 			costs = activity.postByCountry(clin=clin)
 
-			summary = activity.postSummaryByCity(clin=clin)
-			numSummaryRows = summary.shape[0]
+			post = activity.postSummaryByCity(clin=clin)
+			numPostRows = post.shape[0]
 
-			details = activity.groupedForPostReport(clin=clin)
-			numDetailRows = details.shape[0]
+			postDetails = activity.groupedForPostReport(clin=clin)
+			numPostDetailRows = postDetails.shape[0]
+
+			hazard = activity.hazardSummaryByCity(clin=clin)
+			numHazardRows = hazard.shape[0]
+
+			hazardDetails = activity.groupedForHazardReport(clin=clin)
+			numHazardDetailRows = hazardDetails.shape[0]
 
 			invoiceAmount = costs['Total'].sum()
 
@@ -244,16 +250,23 @@ def processActivityFromFile(filename):
 					'billingPeriod': billingPeriod,
 					'invoiceAmount': invoiceAmount,
 					'rowsToSum': rowsToSum, 
-					'detailRows': numDetailRows,
-					'summaryRows': numSummaryRows
+					'postRows': numPostRows,
+					'postDetailRows': numPostDetailRows,
+					'hazardRows': numHazardRows,
+					'hazardDetailRows': numHazardDetailRows
 				}
 
 				sheetInfo[sheetName] = invoiceDetail
 				invoiceSummary.append(invoiceDetail)
 
-			sheetName = f'PostHazard-{region}-details'
-			details.to_excel(writer, sheet_name=sheetName, startrow=firstRow, startcol=0, header=True, index=False)
-			summary.to_excel(writer, sheet_name=sheetName, startrow=numDetailRows + firstRow + spaceToSummary, startcol=5, header=False, index=False)
+			sheetName = f'PostHazard-{region}-Post'
+			postDetails.to_excel(writer, sheet_name=sheetName, startrow=firstRow, startcol=0, header=True, index=False)
+			post.to_excel(writer, sheet_name=sheetName, startrow=numPostDetailRows + firstRow + spaceToSummary, startcol=5, header=False, index=False)
+
+			if numHazardDetailRows > 0:
+				sheetName = f'PostHazard-{region}-Hazard'
+				hazardDetails.to_excel(writer, sheet_name=sheetName, startrow=firstRow, startcol=0, header=True, index=False)
+				hazard.to_excel(writer, sheet_name=sheetName, startrow=numHazardDetailRows + firstRow + spaceToSummary, startcol=5, header=False, index=False)
 
 		# Apply formatting in place
 		workbook = load_workbook(outputFile)
@@ -266,10 +279,16 @@ def processActivityFromFile(filename):
 			info = sheetInfo[key]
 			formatCostsTab(worksheet, info)
 
-			detailSheetName = f'PostHazard-{region}-details'
+			detailSheetName = f'PostHazard-{region}-Post'
 			worksheet = workbook[detailSheetName]
 			postTitle = f'{region} Post {activity.dateStart.strftime("%B")} {startYear}'
-			formatPostDetails(worksheet, postTitle, firstRow, info['detailRows'], spaceToSummary, info['summaryRows'])
+			formatPostDetails(worksheet, postTitle, firstRow, info['postDetailRows'], spaceToSummary, info['postRows'])
+
+			if info['hazardDetailRows'] > 0:
+				detailSheetName = f'PostHazard-{region}-Hazard'
+				worksheet = workbook[detailSheetName]
+				postTitle = f'{region} Hazard {activity.dateStart.strftime("%B")} {startYear}'
+				formatPostDetails(worksheet, postTitle, firstRow, info['hazardDetailRows'], spaceToSummary, info['hazardRows'])
 
 		workbook.save(outputFile)
 
