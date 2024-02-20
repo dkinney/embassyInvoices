@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils import get_column_letter
-from openpyxl.styles import Border, Side, PatternFill
+from openpyxl.styles import Border, Side, PatternFill, Alignment
 
 from InvoiceStyles import styles
 
@@ -117,11 +117,11 @@ dataStyles = {
         'style': 'currencyCell'
     },
     'Post Rate': {
-        'width': 15,
+        'width': 12,
         'style': 'percentageCell'
     },
     'Hazard Rate': {
-        'width': 15,
+        'width': 12,
         'style': 'percentageCell'
     },
     'Posting': {
@@ -559,8 +559,10 @@ def formatDetailTab(worksheet):
     
     styleColumn(worksheet, 'Q', 'Rate')
     styleColumn(worksheet, 'R', 'Total')
-    styleColumn(worksheet, 'S', 'Total')
+    styleColumn(worksheet, 'S', 'Post Rate')
     styleColumn(worksheet, 'T', 'Total')
+    styleColumn(worksheet, 'U', 'Hazard Rate')
+    styleColumn(worksheet, 'V', 'Total')
 
     # create a table
     table = Table(displayName='Detail', ref="A2:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
@@ -581,13 +583,57 @@ def formatDetailTab(worksheet):
     sumColumn(worksheet, 'O', 'number', start, stop, top=True)
     sumColumn(worksheet, 'P', 'number', start, stop, top=True)
     sumColumn(worksheet, 'R', 'currency', start, stop, top=True)
-    sumColumn(worksheet, 'S', 'currency', start, stop, top=True)
     sumColumn(worksheet, 'T', 'currency', start, stop, top=True)
+    sumColumn(worksheet, 'V', 'currency', start, stop, top=True)
 
     # add a fill for columns Q, R, S to show that they are are summary columns
     for column in ['N', 'O', 'P']:
         for row in range(1, stop):
             worksheet[column][row].fill = gray
+
+def formatPostDetails(worksheet, title, startRow, detailRows, spaceToSummary = 2, summaryRows = 1):
+    styleColumn(worksheet, 'A', 'City')
+    styleColumn(worksheet, 'B', 'SubCLIN')
+    styleColumn(worksheet, 'C', 'Name')
+    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'E', 'Rate')
+    styleColumn(worksheet, 'F', 'Total')
+    styleColumn(worksheet, 'G', 'Post Rate')
+    styleColumn(worksheet, 'H', 'Total')
+    styleColumn(worksheet, 'I', 'Hazard Rate')
+    styleColumn(worksheet, 'J', 'Total')
+
+    logo = openpyxl.drawing.image.Image('logo-MEC.png')
+    worksheet.add_image(logo, 'A1')
+
+    worksheet.merge_cells('D2:J2')
+    worksheet['D2'] = title
+    worksheet['D2'].style = 'invoiceSummaryText'
+    worksheet['D2'].alignment = Alignment(horizontal='center')
+
+    # add SUM() formulas
+    stop = startRow + detailRows + 1
+    sumColumn(worksheet, 'H', 'currency', startRow + 1, stop)
+    sumColumn(worksheet, 'J', 'currency', startRow + 1, stop)
+
+    for column in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']:
+        worksheet[f'{column}{startRow + 1}'].style = 'summaryTitle'
+
+        for r in range(startRow, stop):
+            worksheet[column + str(r + 1)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
+
+    start = startRow + detailRows + spaceToSummary
+    stop = start + summaryRows
+    sumColumn(worksheet, 'H', 'currency', start + 1, stop)
+    sumColumn(worksheet, 'J', 'currency', start + 1, stop)
+
+    for column in ['F', 'G', 'H', 'J']:
+        worksheet[f'{column}{startRow + 1}'].style = 'summaryTitle'
+
+        for r in range(start, stop):
+            worksheet[column + str(r + 1)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
+
+    worksheet.page_setup.orientation = worksheet.ORIENTATION_LANDSCAPE
 
 def formatHoursTab(worksheet, approvers=None, invoiceNumber=None, locationName=None, billingFrom=None):
     aboveRows = 3

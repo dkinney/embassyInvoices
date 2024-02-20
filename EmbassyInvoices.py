@@ -7,9 +7,9 @@ from openpyxl import load_workbook
 from EmployeeTime import EmployeeTime
 from BillingRates import BillingRates
 from InvoiceStyles import styles
-from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatHoursTab, formatHoursDetailsTab, formatDetailTab, formatSummaryTab
+from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatHoursTab, formatHoursDetailsTab, formatDetailTab, formatSummaryTab, formatPostDetails
 
-versionString = 'v5'
+versionString = 'v6'
 
 Regions = {
 	'001': 'Asia',
@@ -151,7 +151,7 @@ def processActivityFromFile(filename):
 
 				sheetName = f'Details-{location}'
 				details = activity.byDate(clin=clin, location=location)
-				details.drop(columns=['Region', 'Holiday', 'Vacation', 'Bereavement', 'HoursReg', 'HoursOT'], inplace=True)
+				details.drop(columns=['State', 'Region', 'Holiday', 'Vacation', 'Bereavement', 'HoursReg', 'HoursOT'], inplace=True)
 				# rename some columns for space
 				details.rename(columns={
 					'EmployeeName': 'Name',
@@ -201,11 +201,20 @@ def processActivityFromFile(filename):
 		costInvoiceNumber = f'SDEC-{startYear}{startMonth}'
 
 		sheetInfo = {}
+		firstRow = 3
+		spaceToSummary = 4
 
 		with pd.ExcelWriter(outputFile) as writer:
 			sheetName = f'PostHazard-{region}'
 
-			costs = activity.groupedForCosts(clin=clin)
+			costs = activity.postByCountry(clin=clin)
+
+			summary = activity.postSummaryByCity(clin=clin)
+			numSummaryRows = summary.shape[0]
+
+			details = activity.groupedForPostReport(clin=clin)
+			numDetailRows = details.shape[0]
+
 			invoiceAmount = costs['Total'].sum()
 
 			if invoiceAmount > 0:
@@ -215,7 +224,7 @@ def processActivityFromFile(filename):
 				rows = costs.shape[0]
 				costs.to_excel(writer, sheet_name=sheetName, startrow=summaryStartRow, startcol=0, header=False)
 				rowsToSum.append((summaryStartRow + 1, summaryStartRow + rows))
-				summaryStartRow = summaryStartRow + rows + 2
+				summaryStartRow = summaryStartRow + rows + spaceToSummary
 
 				# use the first character of the region to uniquely identify this invoice
 				uniqueRegion = region[0].upper()
@@ -234,11 +243,17 @@ def processActivityFromFile(filename):
 					'taskOrder': f'ODC-{region}',
 					'billingPeriod': billingPeriod,
 					'invoiceAmount': invoiceAmount,
-					'rowsToSum': rowsToSum
+					'rowsToSum': rowsToSum, 
+					'detailRows': numDetailRows,
+					'summaryRows': numSummaryRows
 				}
 
 				sheetInfo[sheetName] = invoiceDetail
 				invoiceSummary.append(invoiceDetail)
+
+			sheetName = f'PostHazard-{region}-details'
+			details.to_excel(writer, sheet_name=sheetName, startrow=firstRow, startcol=0, header=True, index=False)
+			summary.to_excel(writer, sheet_name=sheetName, startrow=numDetailRows + firstRow + spaceToSummary, startcol=5, header=False, index=False)
 
 		# Apply formatting in place
 		workbook = load_workbook(outputFile)
@@ -250,6 +265,11 @@ def processActivityFromFile(filename):
 			worksheet = workbook[key]
 			info = sheetInfo[key]
 			formatCostsTab(worksheet, info)
+
+			detailSheetName = f'PostHazard-{region}-details'
+			worksheet = workbook[detailSheetName]
+			postTitle = f'{region} Post {activity.dateStart.strftime("%B")} {startYear}'
+			formatPostDetails(worksheet, postTitle, firstRow, info['detailRows'], spaceToSummary, info['summaryRows'])
 
 		workbook.save(outputFile)
 

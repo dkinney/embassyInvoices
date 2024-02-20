@@ -75,14 +75,10 @@ def formatName(text):
 	elif len(tokens) > 2:
 			middleInitial = tokens[2]
 
-	# print(f'formatName({text}) -> {lastName}, {firstName} {middleInitial}')
-	return f'{lastName}, {firstName} {middleInitial}'
+	if middleInitial != '':
+		return f'{lastName}, {firstName} {middleInitial}'
 
-def cleanupTaskID(text):
-	if text in TaskNameMap:
-		return TaskNameMap[text]
-	
-	return text
+	return f'{lastName}, {firstName} {middleInitial}'
 
 def cleanupTask(text):
 	if text in TaskMap:
@@ -188,16 +184,18 @@ class EmployeeTime:
 		pivot['HoursReg'] = pivot['Regular'] + pivot['LocalHoliday'] + pivot['Admin']
 		pivot['HoursOT'] = pivot['Overtime'] + pivot['On-callOT'] + pivot['ScheduledOT'] + pivot['UnscheduledOT']
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
-		pivot['PostWages'] = pivot['Regular'] * pivot['HourlyRateReg'] # only use "Regular" hours for posting, not OT nor other type of regular hours
-		pivot['Posting'] = pivot['PostWages'] * pivot['PostingRate']
-		pivot['Hazard'] = pivot['PostWages'] * pivot['HazardRate']
+		pivot['RegularWages'] = pivot['Regular'] * pivot['HourlyRateReg'] # only use "Regular" hours for posting, not OT nor other type of regular hours
+		pivot['Posting'] = pivot['RegularWages'] * pivot['PostingRate']
+		pivot['Hazard'] = pivot['RegularWages'] * pivot['HazardRate']
 
 		pivot = pivot[[
 			'Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 
 			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal',
-			'HourlyRateReg', 'PostWages', 'Posting', 'Hazard'
+			'HourlyRateReg', 'RegularWages', 
+			'PostingRate', 'Posting', 
+			'HazardRate', 'Hazard'
 		]]
 
 		# pivot.sort_values(['Date', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName'], inplace=True)
@@ -284,6 +282,46 @@ class EmployeeTime:
 		costs.sort_values(['Location', 'Type'], ascending=[True, False], inplace=True)
 
 		return costs
+	
+	def postByCountry(self, clin=None):
+		costDetail = self.details()
+
+		if clin is not None:
+			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
+
+		posts = costDetail.groupby(['Location'], as_index=False).agg({'Posting': 'sum'})
+		posts['CLIN'] = '207'
+		posts['Type'] = 'Post'
+		posts['G&A'] = posts['Posting'] * upchargeRate
+		posts['Total'] = posts['Posting'] + posts['G&A']
+		posts.rename(columns={'Posting': 'Amount'}, inplace=True)
+		posts = posts[['CLIN', 'Location', 'Type', 'Amount', 'G&A', 'Total']]
+
+		hazards = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Hazard': 'sum'})
+
+		hazards['CLIN'] = '208'
+		hazards['Type'] = 'Hazard'
+		hazards['G&A'] = hazards['Hazard'] * upchargeRate
+		hazards['Total'] = hazards['Hazard'] + hazards['G&A']
+		hazards.rename(columns={'Hazard': 'Amount'}, inplace=True)
+		hazards = hazards[['CLIN', 'Location', 'Type', 'Amount', 'G&A', 'Total']]
+
+		costs = pd.concat([posts, hazards])
+		costs = costs.loc[costs['Total'] > 0]
+		costs.sort_values(['Location'], inplace=True)
+
+		return costs
+	
+	def postSummaryByCity(self, clin=None):
+		costDetail = self.details()
+
+		if clin is not None:
+			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
+
+		summary = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Posting': 'sum', 'Hazard': 'sum'})
+		summary['Spacer'] = ''
+		summary = summary[['City', 'Location', 'Posting', 'Spacer', 'Hazard']]
+		return summary
 
 	def groupedForHoursReport(self, clin=None, location=None):
 		details = self.details(clin=clin, location=location)
@@ -346,10 +384,39 @@ class EmployeeTime:
 			'HoursOT': 'sum',
 			'HoursTotal': 'sum',
 			'HourlyRateReg': 'first',
-			'PostWages': 'sum',
+			'RegularWages': 'sum',
+			'PostingRate': 'first',
 			'Posting': 'sum',
+			'HazardRate': 'first',
 			'Hazard': 'sum'
 		})
+
+		return grouped
+	
+	def groupedForPostReport(self, clin=None, location=None):
+		details = self.details(clin=clin, location=location)
+		details.drop(columns=['CLIN'], inplace=True)
+		# details.sort_values(['Date', 'EmployeeName'], inplace=True)
+
+		grouped = details.groupby(['SubCLIN', 'EmployeeName'], as_index=False).agg({
+			'Location': 'first',
+			'City': 'first',
+			'Regular': 'sum',
+			'HourlyRateReg': 'first',
+			'RegularWages': 'sum',
+			'PostingRate': 'first',
+			'Posting': 'sum',
+			'HazardRate': 'first',
+			'Hazard': 'sum'
+		})
+
+		# reorder the columns to be more useful
+		grouped = grouped[[
+			'City', 'SubCLIN', 'EmployeeName',
+			'Regular', 'HourlyRateReg', 'RegularWages', 
+			'PostingRate', 'Posting',
+			'HazardRate', 'Hazard'
+		]]
 
 		return grouped
 	
@@ -424,6 +491,10 @@ if __name__ == '__main__':
 
 	time = EmployeeTime(activityFilename, verbose=True)
 	time.joinWith(billingRates)
+
+	time.groupedForPostReport(clin='001')
+
+	exit()
 
 	data = time.groupedForInvoicing(clin='002', location='NATO')
 	now = pd.Timestamp.now().strftime("%m%d%H%M")
