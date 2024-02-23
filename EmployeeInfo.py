@@ -70,4 +70,33 @@ if __name__ == '__main__':
 	# By default, uses the file, "EmployeeInfo.xlsx" within the data directory
 	# unless a filename is provided as a command line argument.
 	inputFilename = sys.argv[1] if len(sys.argv) > 1 else None
-	employees = EmployeeInfo(inputFilename, verbose=True)
+	employees = EmployeeInfo(inputFilename, verbose=False)
+
+	from BillingRates import BillingRates
+	billingRates = BillingRates(verbose=False)
+	billingRates.joinWith(employees)
+
+	# reordering the columns
+	billingRates.data = billingRates.data[[
+		'EmployeeName', 'EmployeeID', 'EffectiveDate',
+		'Title', 'HourlyRateReg', 'HourlyRateOT', 
+		'Location', 'City', 'PostingRate', 'HazardRate', 
+		'CLIN', 'SubCLIN', 'Category', 'BillRateReg', 'BillRateOT'
+	]]
+
+	outputFile = 'Resolved Employee Info.xlsx'
+	with pd.ExcelWriter(outputFile) as writer:
+		billingRates.data.to_excel(writer, sheet_name='Info', startrow=0, startcol=0, header=True, index=False)
+
+	from openpyxl import load_workbook
+	from InvoiceStyles import styles
+	from InvoiceFormat import formatEmployeeInfo
+
+	workbook = load_workbook(outputFile)
+
+	for styleName in styles.keys():
+		workbook.add_named_style(styles[styleName])
+		
+	worksheet = workbook['Info']
+	formatEmployeeInfo(worksheet)
+	workbook.save(outputFile)

@@ -1326,3 +1326,28 @@ def formatTimeByEmployee(worksheet):
             highlightRow(worksheet, row, color=orange)  
         else:
             highlightRow(worksheet, row)
+
+def formatEmployeeInfo(worksheet):
+    styleColumn(worksheet, 'A', 'Name')
+    styleColumn(worksheet, 'B', 'Number')
+    styleColumn(worksheet, 'C', 'Date')
+    styleColumn(worksheet, 'D', 'Title')
+    styleColumn(worksheet, 'E', 'Rate')
+    styleColumn(worksheet, 'F', 'Rate')
+    styleColumn(worksheet, 'G', 'Location')
+    styleColumn(worksheet, 'H', 'City')
+    styleColumn(worksheet, 'I', 'Post Rate')
+    styleColumn(worksheet, 'J', 'Hazard Rate')
+    styleColumn(worksheet, 'K', 'CLIN')
+    styleColumn(worksheet, 'L', 'SubCLIN')
+    styleColumn(worksheet, 'M', 'Category')
+    styleColumn(worksheet, 'N', 'Rate')
+    styleColumn(worksheet, 'O', 'Rate')
+
+    # create a table
+    table = Table(displayName=worksheet.title, ref="A1:O" + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A2']
+
+    for column in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']:
+        worksheet[f'{column}1'].style = 'summaryTitle'
