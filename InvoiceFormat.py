@@ -593,7 +593,7 @@ def formatDetailTab(worksheet):
     # add a fill for columns to show that they are are summary columns
     for column in ['N', 'O', 'P']:
         for row in range(1, stop):
-            worksheet[column][row].fill = gray
+            worksheet[column][row].fill = lightBlue
 
 def formatPostDetails(worksheet, title, startRow, detailRows, spaceToSummary = 2, summaryRows = 1):
     styleColumn(worksheet, 'A', 'City')
