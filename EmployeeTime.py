@@ -470,9 +470,9 @@ class EmployeeTime:
 		return grouped
 	
 	def byEmployee(self):
-		grouped = self.data.groupby(['Region', 'EmployeeName', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
+		grouped = self.data.groupby(['Region', 'EmployeeName', 'SubCLIN', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
-		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'State'], columns='TaskName', values='Hours').reset_index()
+		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'SubCLIN', 'State'], columns='TaskName', values='Hours').reset_index()
 
 		for taskName in TaskNames.values():
 			if taskName not in pivot.columns:
@@ -485,7 +485,7 @@ class EmployeeTime:
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
 
 		pivot = pivot[[
-			'Region', 'EmployeeName', 'State',
+			'Region', 'EmployeeName', 'SubCLIN', 'State',
 			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal'
@@ -502,9 +502,9 @@ class EmployeeTime:
 		if location is not None:
 			df = df.loc[df['Location'] == location]
 
-		grouped = df.groupby(['Region', 'EmployeeName', 'Date', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
+		grouped = df.groupby(['Region', 'EmployeeName', 'SubCLIN', 'Date', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
-		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'Date', 'State'], columns='TaskName', values='Hours').reset_index()
+		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'SubCLIN', 'Date', 'State'], columns='TaskName', values='Hours').reset_index()
 
 		for taskName in TaskNames.values():
 			if taskName not in pivot.columns:
@@ -517,7 +517,7 @@ class EmployeeTime:
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
 
 		pivot = pivot[[
-			'Region', 'Date', 'EmployeeName', 'State',
+			'Region', 'Date', 'EmployeeName', 'SubCLIN', 'State',
 			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal'
@@ -538,12 +538,8 @@ if __name__ == '__main__':
 		print(f'Usage: {sys.argv[0]} <activity file>')
 		exit()
 
-	time = EmployeeTime(activityFilename, verbose=True)
+	time = EmployeeTime(activityFilename, verbose=False)
 	time.joinWith(billingRates)
-
-	time.groupedForPostReport(clin='001')
-
-	exit()
 
 	data = time.groupedForInvoicing(clin='002', location='NATO')
 	now = pd.Timestamp.now().strftime("%m%d%H%M")
@@ -553,20 +549,28 @@ if __name__ == '__main__':
 	timeByDate = time.byDate()
 	timeByEmployee = time.byEmployee()
 
-	with pd.ExcelWriter(outputFile) as writer:
-		timeByDate.to_excel(writer, sheet_name='Date', startrow=0, startcol=0, header=True, index=False)
-		timeByEmployee.to_excel(writer, sheet_name='Employee', startrow=0, startcol=0, header=True, index=False)
+	for region in ['Asia', 'Europe']:
+		regionDate = timeByDate.loc[timeByDate['Region'] == region]
+		regionDate = regionDate.drop(columns=['Region'])
 
-	# Apply formatting in place
-	workbook = load_workbook(outputFile)
+		regionEmployee = timeByEmployee.loc[timeByEmployee['Region'] == region]
+		regionEmployee = regionEmployee.drop(columns=['Region'])
 
-	for styleName in styles.keys():
-		workbook.add_named_style(styles[styleName])
-		
-	worksheet = workbook['Date']
-	formatTimeByDate(worksheet)
+		regionFile = f'Status-{region}-{time.startYear()}{time.startMonth()}-{now}.xlsx'
 
-	worksheet = workbook['Employee']
-	formatTimeByEmployee(worksheet)
+		with pd.ExcelWriter(regionFile) as writer:
+			regionDate.to_excel(writer, sheet_name='Date', startrow=0, startcol=0, header=True, index=False)
+			regionEmployee.to_excel(writer, sheet_name='Employee', startrow=0, startcol=0, header=True, index=False)
 
-	workbook.save(outputFile)
+		workbook = load_workbook(regionFile)
+
+		for styleName in styles.keys():
+			workbook.add_named_style(styles[styleName])
+			
+		worksheet = workbook['Date']
+		formatTimeByDate(worksheet)
+
+		worksheet = workbook['Employee']
+		formatTimeByEmployee(worksheet)
+
+		workbook.save(regionFile)

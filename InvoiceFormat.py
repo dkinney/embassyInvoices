@@ -18,6 +18,7 @@ yellow = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid'
 orange = PatternFill(start_color='FFA500', end_color='FFA500', fill_type='solid')
 gray = PatternFill(start_color='D3D3D3', end_color='D3D3D3', fill_type='solid')
 blue = PatternFill(start_color='21A7F2', end_color='21A7F2', fill_type='solid')
+lightBlue = PatternFill(start_color='DCE6F1', end_color='DCE6F1', fill_type='solid')
 
 dataStyles = {
     'CLIN': {
@@ -589,7 +590,7 @@ def formatDetailTab(worksheet):
     sumColumn(worksheet, 'T', 'currency', start, stop, top=True)
     sumColumn(worksheet, 'V', 'currency', start, stop, top=True)
 
-    # add a fill for columns Q, R, S to show that they are are summary columns
+    # add a fill for columns to show that they are are summary columns
     for column in ['N', 'O', 'P']:
         for row in range(1, stop):
             worksheet[column][row].fill = gray
@@ -1221,9 +1222,9 @@ def formatJoinTab(worksheet):
 def formatTimeByDate(worksheet):
     worksheet.insert_rows(1, 1)
 
-    styleColumn(worksheet, 'A', 'Location')
-    styleColumn(worksheet, 'B', 'Date')
-    styleColumn(worksheet, 'C', 'Name')
+    styleColumn(worksheet, 'A', 'Date')
+    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'C', 'SubCLIN')
     styleColumn(worksheet, 'D', 'State')
     styleColumn(worksheet, 'E', 'Hours')
     styleColumn(worksheet, 'F', 'Hours')
@@ -1273,11 +1274,16 @@ def formatTimeByDate(worksheet):
         else:
             highlightRow(worksheet, row)
 
+    # add a fill for columns to show that they are are summary columns
+    for column in ['O', 'P', 'Q']:
+        for row in range(1, stop):
+            worksheet[column][row].fill = lightBlue
+
 def formatTimeByEmployee(worksheet):
     worksheet.insert_rows(1, 1)
 
-    styleColumn(worksheet, 'A', 'Location')
-    styleColumn(worksheet, 'B', 'Name')
+    styleColumn(worksheet, 'A', 'Name')
+    styleColumn(worksheet, 'B', 'SubCLIN')
     styleColumn(worksheet, 'C', 'State')
     styleColumn(worksheet, 'D', 'Hours')
     styleColumn(worksheet, 'E', 'Hours')
@@ -1326,6 +1332,11 @@ def formatTimeByEmployee(worksheet):
             highlightRow(worksheet, row, color=orange)  
         else:
             highlightRow(worksheet, row)
+
+     # add a fill for columns to show that they are are summary columns
+    for column in ['N', 'O', 'P']:
+        for row in range(1, stop):
+            worksheet[column][row].fill = lightBlue
 
 def formatEmployeeInfo(worksheet):
     styleColumn(worksheet, 'A', 'Name')
