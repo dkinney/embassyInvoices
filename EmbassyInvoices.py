@@ -62,7 +62,6 @@ def processActivityFromFile(filename):
 	billingRates = BillingRates(verbose=False)
 
 	print(f'Processing activity from {filename}...')
-
 	invoiceSummary = []
 
 	if filename is None:
@@ -72,6 +71,14 @@ def processActivityFromFile(filename):
 	# activity = BillingActivity(filename, verbose=False)
 	activity = EmployeeTime(filename, verbose=False)
 	activity.joinWith(billingRates)
+
+	confirm = activity.data[activity.data['CLIN'].isnull()]
+
+	if not confirm.empty:
+		print('\nERROR ----------------------------------------')
+		print(f'Employees that did not join with billing rates:')
+		print(confirm['EmployeeName'].unique())
+		print('ERROR ----------------------------------------')
 
 	# print('Time: ', activity.dateStart, ' - ', activity.dateEnd)
 
