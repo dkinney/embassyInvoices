@@ -121,7 +121,7 @@ def getPostHazardData(countryCode=None, postCode=None, effectiveDate=None) -> pd
     
     # df has the table with the relevant information
     # name the columns to make it easier to reference them
-    df.columns = ['PostName', 'COLA', 'PostRate', 'TransferZone', 'Footnote', 'HazardRate', 'EducationAllowance', 'LivingAllowance', 'ReportingSchedule']
+    df.columns = ['PostName', 'COLA', 'PostingRate', 'TransferZone', 'Footnote', 'HazardRate', 'EducationAllowance', 'LivingAllowance', 'ReportingSchedule']
     df = df.fillna(0)
 
     # the effective date is not in the table, so it needs to be added
@@ -135,7 +135,7 @@ def getPostHazardData(countryCode=None, postCode=None, effectiveDate=None) -> pd
 
     df['EffectiveDate'] = effectiveDate
 
-    df = df[['EffectiveDate', 'PostName', 'PostRate', 'HazardRate']]
+    df = df[['EffectiveDate', 'PostName', 'PostingRate', 'HazardRate']]
     return df
 
 # main function
