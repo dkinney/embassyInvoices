@@ -72,6 +72,12 @@ if __name__ == '__main__':
 	inputFilename = sys.argv[1] if len(sys.argv) > 1 else None
 	employees = EmployeeInfo(inputFilename, verbose=False)
 
+	# load PostHazard rates
+	postHazard = pd.read_csv('data/PostHazardRates.csv')
+	postHazard['EffectiveDate'] = pd.to_datetime(postHazard['EffectiveDate'])
+	postHazard.sort_values(by='EffectiveDate', inplace=True)
+
+	# load BillingRates
 	from BillingRates import BillingRates
 	billingRates = BillingRates(verbose=False)
 	billingRates.joinWith(employees)
@@ -84,19 +90,11 @@ if __name__ == '__main__':
 		'CLIN', 'SubCLIN', 'Category', 'BillRateReg', 'BillRateOT'
 	]]
 
-	outputFile = 'Resolved Employee Info.xlsx'
-	with pd.ExcelWriter(outputFile) as writer:
-		billingRates.data.to_excel(writer, sheet_name='Info', startrow=0, startcol=0, header=True, index=False)
+	outputFile = 'data/EmployeeInfo.csv'
 
-	from openpyxl import load_workbook
-	from InvoiceStyles import styles
-	from InvoiceFormat import formatEmployeeInfo
+	# Save the data to a csv file
+	billingRates.data.to_csv(outputFile, index=False)
 
-	workbook = load_workbook(outputFile)
-
-	for styleName in styles.keys():
-		workbook.add_named_style(styles[styleName])
-		
-	worksheet = workbook['Info']
-	formatEmployeeInfo(worksheet)
-	workbook.save(outputFile)
+	
+	# with pd.ExcelWriter(outputFile) as writer:
+	# 	billingRates.data.to_excel(writer, sheet_name='Info', startrow=0, startcol=0, header=True, index=False)

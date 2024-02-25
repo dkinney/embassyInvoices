@@ -143,7 +143,7 @@ if __name__ == '__main__':
     ratesData = None
     earliestRateData = pd.to_datetime('2023-01-01')
 
-    ratesFile = sys.argv[1] if len(sys.argv) > 1 else 'PostHazardRates.csv'
+    ratesFile = sys.argv[1] if len(sys.argv) > 1 else 'data/PostHazardRates.csv'
 
     # load existing data if the file exists
     if os.path.exists(ratesFile):

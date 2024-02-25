@@ -58,7 +58,7 @@ CountryApprovers = {
 	}
 }
 
-def processActivityFromFile(filename):
+def processActivityFromFile(filename, startInvoiceNumber=0):
 	billingRates = BillingRates(verbose=False)
 
 	print(f'Processing activity from {filename}...')
@@ -89,6 +89,8 @@ def processActivityFromFile(filename):
 
 	# print('Location info: ', locationInfo)
 
+	invoiceNumberValue = startInvoiceNumber
+
 	for clin in locationInfo.keys():
 		region = Regions[clin]
 
@@ -97,7 +99,7 @@ def processActivityFromFile(filename):
 		##########################################################
 
 		outputFile = f'Labor-{startYear}{startMonth}-{region}-{versionString}.xlsx'
-		laborInvoiceNumber = f'SDEL-{startYear}{startMonth}'
+		
 
 		sheetInfo = {}
 
@@ -120,7 +122,9 @@ def processActivityFromFile(filename):
 
 				summary.to_excel(writer, sheet_name=sheetName, startrow=summaryStartRow, startcol=0, header=False)
 
-				invoiceNumber = laborInvoiceNumber + CountryCodes[location]
+				# invoiceNumber = laborInvoiceNumber + CountryCodes[location]
+				invoiceNumber = f'SD-{invoiceNumberValue:04d}'
+				invoiceNumberValue += 1
 				invoiceAmount = data['Amount'].sum()
 
 				# startMonthName = activity.dateStart.strftime('%b')
@@ -129,11 +133,11 @@ def processActivityFromFile(filename):
 
 				invoiceDetail = {
 					'description': f'{activity.dateStart.strftime("%B")} {startYear}',
-					'region': region,
+					'region': location,
 					'filename': outputFile,
 					'type': 'Labor',
 					'invoiceNumber': invoiceNumber,
-					'taskOrder': location,
+					'taskOrder': f'Labor-{location}',
 					'billingPeriod': billingPeriod,
 					'invoiceAmount': invoiceAmount,
 					'rowsToSum': rowsToSum
@@ -176,14 +180,14 @@ def processActivityFromFile(filename):
 
 		for location in locationInfo[clin]:
 			worksheet = hoursWorkbook[f'Hours-{location}']
-			invoiceNumber = laborInvoiceNumber + CountryCodes[location]
+			# invoiceNumber = laborInvoiceNumber + CountryCodes[location]
 			
 			formatHoursTab(worksheet, 
 				  approvers=CountryApprovers[location], 
-				  locationName=location, invoiceNumber=invoiceNumber, billingFrom=activity.billingPeriod())
+				  locationName=location, billingFrom=activity.billingPeriod())
 			
 			worksheet = hoursWorkbook[f'Details-{location}']
-			formatHoursDetailsTab(worksheet, locationName=location, invoiceNumber=invoiceNumber, billingFrom=activity.billingPeriod())
+			formatHoursDetailsTab(worksheet, locationName=location, billingFrom=activity.billingPeriod())
 		
 		hoursWorkbook.save(hoursReportFile)
 		
@@ -204,7 +208,7 @@ def processActivityFromFile(filename):
 		# PostHazard Costs
 		##########################################################
 
-		outputFile = f'PostHazard-{startYear}{startMonth}-{region}-{versionString}.xlsx'
+		outputFile = f'Post-{startYear}{startMonth}-{region}-{versionString}.xlsx'
 		costInvoiceNumber = f'SDEC-{startYear}{startMonth}'
 
 		sheetInfo = {}
@@ -239,9 +243,8 @@ def processActivityFromFile(filename):
 				rowsToSum.append((summaryStartRow + 1, summaryStartRow + rows))
 				summaryStartRow = summaryStartRow + rows + spaceToSummary
 
-				# use the first character of the region to uniquely identify this invoice
-				uniqueRegion = region[0].upper()
-				invoiceNumber = costInvoiceNumber + uniqueRegion
+				invoiceNumber = f'SD-{invoiceNumberValue:04d}'
+				invoiceNumberValue += 1		
 
 				startMonthName = activity.dateStart.strftime('%b')
 				endMonthName = activity.dateEnd.strftime('%b')
@@ -251,9 +254,9 @@ def processActivityFromFile(filename):
 					'description': f'{activity.dateStart.strftime("%B")} {startYear}',
 					'region': region,
 					'filename': outputFile,
-					'type': 'Costs',
+					'type': 'Post',
 					'invoiceNumber': invoiceNumber,
-					'taskOrder': f'ODC-{region}',
+					'taskOrder': f'Post-{region}',
 					'billingPeriod': billingPeriod,
 					'invoiceAmount': invoiceAmount,
 					'rowsToSum': rowsToSum, 
@@ -326,11 +329,13 @@ def processActivityFromFile(filename):
 
 def showResult(resultDictionary):
 	result = pd.DataFrame(resultDictionary)
-	result.drop(columns=['rowsToSum'], inplace=True)
+	result.drop(columns=['rowsToSum', 'postRows', 'postDetailRows', 'hazardRows', 'hazardDetailRows'], inplace=True)
 	print(result)
 
 if __name__ == '__main__':
 	import sys
+
+	startInvoiceNumber = 123
 
 	if len(sys.argv) < 2:
 		print(f'Usage: {sys.argv[0]} <billing activity file>')
@@ -339,7 +344,8 @@ if __name__ == '__main__':
 	processed = []
 
 	for filename in sys.argv[1:]:
-		result = processActivityFromFile(filename)
+		result = processActivityFromFile(filename, startInvoiceNumber=startInvoiceNumber)
+		
 		showResult(result)
 
 		for item in result:
@@ -348,8 +354,10 @@ if __name__ == '__main__':
 	invoices = pd.DataFrame(processed)
 
 	# Drop the rowsToSum column if it exists
-	if 'rowsToSum' in invoices.columns:
-		invoices.drop(columns=['rowsToSum'], inplace=True)
+	invoices.drop(columns=['rowsToSum', 'postRows', 'postDetailRows', 'hazardRows', 'hazardDetailRows'], inplace=True)
+	
+	# if 'rowsToSum' in invoices.columns:
+	# 	invoices.drop(columns=['rowsToSum'], inplace=True)
 
 	invoices.rename(columns={
 		'description': 'Description',

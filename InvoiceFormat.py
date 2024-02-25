@@ -635,7 +635,7 @@ def formatPostDetails(worksheet, title, startRow, detailRows, spaceToSummary = 2
 
     worksheet.page_setup.orientation = worksheet.ORIENTATION_LANDSCAPE
 
-def formatHoursTab(worksheet, approvers=None, invoiceNumber=None, locationName=None, billingFrom=None):
+def formatHoursTab(worksheet, approvers=None, locationName=None, billingFrom=None):
     aboveRows = 3
     worksheet.insert_rows(1, aboveRows)
 
@@ -695,14 +695,9 @@ def formatHoursTab(worksheet, approvers=None, invoiceNumber=None, locationName=N
     worksheet['G' + str(signaturesRow)].value = approvers['COR']
     worksheet['G' + str(signaturesRow)].style = 'boldTextCell'
 
-    if invoiceNumber is None:
-        worksheet['G1'] = 'Invoice Date:'
-        worksheet['H1'] = processingDate
-    else:
-        worksheet['G1'] = 'Invoice Number:'
-        worksheet['H1'] = invoiceNumber
-
+    worksheet['G1'] = 'Invoice Date:'
     worksheet['G1'].style = 'invoiceHeader'
+    worksheet['H1'] = processingDate
     worksheet['H1'].style = 'invoiceValue'
 
     if locationName is not None:
@@ -756,13 +751,8 @@ def formatHoursDetailsTab(worksheet, locationName=None, invoiceNumber=None, bill
         for r in range(start - 2, stop):
             worksheet[column + str(r + 1)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
 
-    if invoiceNumber is None:
-        worksheet['G1'] = 'Invoice Date:'
-        worksheet['H1'] = processingDate
-    else:
-        worksheet['G1'] = 'Invoice Number:'
-        worksheet['H1'] = invoiceNumber
-
+    worksheet['G1'] = 'Invoice Date:'
+    worksheet['H1'] = processingDate
     worksheet['G1'].style = 'invoiceHeader'
     worksheet['H1'].style = 'invoiceValue'
 
