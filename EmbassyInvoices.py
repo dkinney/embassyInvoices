@@ -375,7 +375,7 @@ if __name__ == '__main__':
 	workbook = load_workbook(outputFile)
 
 	for styleName in styles.keys():
-			workbook.add_named_style(styles[styleName])
+		workbook.add_named_style(styles[styleName])
 		
 	worksheet = workbook['Summary']
 	formatSummaryTab(worksheet)

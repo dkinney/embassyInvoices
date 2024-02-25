@@ -253,36 +253,6 @@ class EmployeeTime:
 		invoiceDetail.sort_values(['SubCLIN', 'EmployeeName', 'Description'], ascending=[True, True, False], inplace=True)
 		return invoiceDetail
 	
-	def groupedForCosts(self, clin=None):
-		costDetail = self.details()
-
-		if clin is not None:
-			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
-
-		posts = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Posting': 'sum'})
-		posts['CLIN'] = '207'
-		posts['Location'] = np.where(posts['Location'] == posts['City'], posts['Location'], posts['City'] + ', ' + posts['Location'])
-		posts['City'] = 'Post'
-		posts['G&A'] = posts['Posting'] * upchargeRate
-		posts['Total'] = posts['Posting'] + posts['G&A']
-		posts.rename(columns={'City': 'Type', 'Posting': 'Amount'}, inplace=True)
-		posts = posts[['CLIN', 'Location', 'Type', 'Amount', 'G&A', 'Total']]
-
-		hazards = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Hazard': 'sum'})
-		hazards['CLIN'] = '208'
-		hazards['Location'] = np.where(hazards['Location'] == hazards['City'], hazards['Location'], hazards['City'] + ', ' + hazards['Location'])
-		hazards['City'] = 'Hazard'
-		hazards['G&A'] = hazards['Hazard'] * upchargeRate
-		hazards['Total'] = hazards['Hazard'] + hazards['G&A']
-		hazards.rename(columns={'City': 'Type', 'Hazard': 'Amount'}, inplace=True)
-		hazards = hazards[['CLIN', 'Location', 'Type', 'Amount', 'G&A', 'Total']]
-
-		costs = pd.concat([posts, hazards])
-		costs = costs.loc[costs['Total'] > 0]
-		costs.sort_values(['Location', 'Type'], ascending=[True, False], inplace=True)
-
-		return costs
-	
 	def postByCountry(self, clin=None):
 		costDetail = self.details()
 
@@ -469,6 +439,7 @@ class EmployeeTime:
 
 		return grouped
 	
+	# for status report
 	def byEmployee(self):
 		grouped = self.data.groupby(['Region', 'EmployeeName', 'SubCLIN', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
@@ -493,6 +464,7 @@ class EmployeeTime:
 
 		return pivot
 
+	# for status report
 	def byDate(self, clin=None, location=None):
 		df = self.data.copy()
 
