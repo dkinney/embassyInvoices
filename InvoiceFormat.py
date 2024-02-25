@@ -9,7 +9,10 @@ from openpyxl.styles import Border, Side, PatternFill, Alignment
 
 from InvoiceStyles import styles
 
-contractNumber = '19AQMM23C0047'
+from Config import Config
+config = Config()
+
+contractNumber = config.data['contractNumber']
 processingDate = datetime.datetime.now().strftime('%d %b %Y')
 
 thinSide = Side(style='thin', color="000000")
@@ -367,56 +370,56 @@ def formatInvoiceTab(worksheet, sheetInfo):
     worksheet['E9'].style = 'invoiceValue'
 
     row = 3
-    worksheet['B' + str(row)] = 'MEC Energy Services'; row += 1
-    worksheet['B' + str(row)] = '3949 Hwy 8, Suite 110'; row += 1
-    worksheet['B' + str(row)] = 'New Town, ND 58763'; row += 1
-    worksheet['B' + str(row)] = 'TIN: 753209819'; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line1']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line2']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line3']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line4']; row += 1
 
     row += 4; toRow = row
     worksheet['A' + str(row)] = 'Bill To:'
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'IPP'; row += 1
-    worksheet['B' + str(row)] = 'Global Financial Services Center'; row += 1
-    worksheet['B' + str(row)] = 'P.O. Box 150008'; row += 1
-    worksheet['B' + str(row)] = 'ATTN: Office of Claims'; row += 1
-    worksheet['B' + str(row)] = 'Charleston, SC 29415-5008'; row += 1
-    worksheet['B' + str(row)] = 'Re: Helga Lumpkin'; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line1']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line2']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line3']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line4']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line5']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line6']; row += 1
 
     row += 1; instructionsRow = row
     worksheet['A' + str(row)] = 'ACH:'
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'Wells Fargo'; row += 1
+    worksheet['B' + str(row)] = config.data['ach']['bank']; row += 1
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'Routing #: 121000248'; row += 1
-    worksheet['B' + str(row)] = 'Account #: 299912421028'
+    worksheet['B' + str(row)] = config.data['ach']['routing']; row += 1
+    worksheet['B' + str(row)] = config.data['ach']['account']
 
     row = toRow
     worksheet['D' + str(row)] = 'Remit To:'
     worksheet['D' + str(row)].style = 'invoiceHeader'
-    worksheet['E' + str(row)] = 'Accounts Receivable'; row += 1
-    worksheet['E' + str(row)] = 'MEC Energy Services'; row += 1
-    worksheet['E' + str(row)] = '23808 Andrew Road, Unit 3'; row += 1
-    worksheet['E' + str(row)] = 'Plainfield, IL 60585'; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line1']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line2']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line3']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line4']; row += 1
 
     row = instructionsRow
     worksheet['D' + str(row)] = 'Invoice Questions:'
     worksheet['D' + str(row)].style = 'invoiceHeader'
-    worksheet['E' + str(row)] = 'Joe Santorelli'; row += 1
-    worksheet['E' + str(row)] = 'joe.santorelli@mandaree.com'; row += 1
-    worksheet['E' + str(row)] = '478.714.0070'; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line1']; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line2']; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line3']; row += 1
 
     row += 1
-    worksheet['A' + str(row)] = 'CLIN'
+    worksheet['A' + str(row)] = config.data['laborHeaders']['clin']
     worksheet['A' + str(row)].style = 'summaryTitle'
-    worksheet['B' + str(row)] = 'Category'
+    worksheet['B' + str(row)] = config.data['laborHeaders']['description']
     worksheet['B' + str(row)].style = 'summaryTitle'
-    worksheet['C' + str(row)] = 'Name'
+    worksheet['C' + str(row)] = config.data['laborHeaders']['type']
     worksheet['C' + str(row)].style = 'summaryTitle'
-    worksheet['D' + str(row)] = 'Hours'
+    worksheet['D' + str(row)] = config.data['laborHeaders']['quantity']
     worksheet['D' + str(row)].style = 'summaryTitle'
-    worksheet['E' + str(row)] = 'Rate'
+    worksheet['E' + str(row)] = config.data['laborHeaders']['rate']
     worksheet['E' + str(row)].style = 'summaryTitle'
-    worksheet['F' + str(row)] = 'Amount'
+    worksheet['F' + str(row)] = config.data['laborHeaders']['total']
     worksheet['F' + str(row)].style = 'summaryTitle'
 
 def formatCostsTab(worksheet, sheetInfo):
@@ -479,64 +482,63 @@ def formatCostsTab(worksheet, sheetInfo):
     worksheet['E8'].style = 'invoiceValue'
     worksheet['D9'] = 'Payment Terms:'
     worksheet['D9'].style = 'invoiceHeader'
-    worksheet['E9'] = 'Net 30'
+    worksheet['E9'] = config.data['paymentTerms']['line1']
     worksheet['E9'].style = 'invoiceValue'
 
     row = 3
-    worksheet['B' + str(row)] = 'MEC Energy Services'; row += 1
-    worksheet['B' + str(row)] = '3949 Hwy 8, Suite 110'; row += 1
-    worksheet['B' + str(row)] = 'New Town, ND 58763'; row += 1
-    worksheet['B' + str(row)] = 'TIN: 753209819'; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line1']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line2']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line3']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line4']; row += 1
 
     row += 4; toRow = row
     worksheet['A' + str(row)] = 'Bill To:'
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'IPP'; row += 1
-    worksheet['B' + str(row)] = 'Global Financial Services Center'; row += 1
-    worksheet['B' + str(row)] = 'P.O. Box 150008'; row += 1
-    worksheet['B' + str(row)] = 'ATTN: Office of Claims'; row += 1
-    worksheet['B' + str(row)] = 'Charleston, SC 29415-5008'; row += 1
-    worksheet['B' + str(row)] = 'Re: Helga Lumpkin'; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line1']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line2']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line3']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line4']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line5']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line6']; row += 1
 
     row += 1; instructionsRow = row
     worksheet['A' + str(row)] = 'ACH:'
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'Wells Fargo'; row += 1
+    worksheet['B' + str(row)] = config.data['ach']['bank']; row += 1
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'Routing #: 121000248'; row += 1
-    worksheet['B' + str(row)] = 'Account #: 299912421028'
+    worksheet['B' + str(row)] = config.data['ach']['routing']; row += 1
+    worksheet['B' + str(row)] = config.data['ach']['account']
 
     row = toRow
     worksheet['D' + str(row)] = 'Remit To:'
     worksheet['D' + str(row)].style = 'invoiceHeader'
-    worksheet['E' + str(row)] = 'Accounts Receivable'; row += 1
-    worksheet['E' + str(row)] = 'MEC Energy Services'; row += 1
-    worksheet['E' + str(row)] = '23808 Andrew Road, Unit 3'; row += 1
-    worksheet['E' + str(row)] = 'Plainfield, IL 60585'; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line1']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line2']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line3']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line4']; row += 1
 
     row = instructionsRow
     worksheet['D' + str(row)] = 'Invoice Questions:'
     worksheet['D' + str(row)].style = 'invoiceHeader'
-    worksheet['E' + str(row)] = 'Joe Santorelli'; row += 1
-    worksheet['E' + str(row)] = 'joe.santorelli@mandaree.com'; row += 1
-    worksheet['E' + str(row)] = '478.714.0070'; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line1']; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line2']; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line3']; row += 1
 
     row += 1
-    worksheet['A' + str(row)] = 'CLIN'
+    worksheet['A' + str(row)] = config.data['postHeaders']['clin']
     worksheet['A' + str(row)].style = 'summaryTitle'
-    worksheet['B' + str(row)] = 'Location'
+    worksheet['B' + str(row)] = config.data['postHeaders']['description']
     worksheet['B' + str(row)].style = 'summaryTitle'
-    worksheet['C' + str(row)] = 'Type'
+    worksheet['C' + str(row)] = config.data['postHeaders']['type']
     worksheet['C' + str(row)].style = 'summaryTitle'
-    worksheet['D' + str(row)] = 'Amount'
+    worksheet['D' + str(row)] = config.data['postHeaders']['quantity']
     worksheet['D' + str(row)].style = 'summaryTitle'
-    worksheet['E' + str(row)] = 'G&A'
+    worksheet['E' + str(row)] = config.data['postHeaders']['rate']
     worksheet['E' + str(row)].style = 'summaryTitle'
-    worksheet['F' + str(row)] = 'Total'
+    worksheet['F' + str(row)] = config.data['postHeaders']['total']
     worksheet['F' + str(row)].style = 'summaryTitle'
 
     # format the summary detail area
-
 
 def formatDetailTab(worksheet):
     worksheet.delete_cols(1, 1)
@@ -1207,8 +1209,6 @@ def formatJoinTab(worksheet):
             worksheet[f'B{row}'].fill = yellow
             worksheet[f'C{row}'].fill = yellow
 
-
-
 def formatTimeByDate(worksheet):
     worksheet.insert_rows(1, 1)
 
@@ -1252,7 +1252,7 @@ def formatTimeByDate(worksheet):
     sumColumn(worksheet, 'P', 'number', start, stop, top=True)
     sumColumn(worksheet, 'Q', 'number', start, stop, top=True)
 
-    for row in range(3, stop):
+    for row in range(3, stop + 1):
         if worksheet[f'D{row}'].value == "Approved":
             pass
         elif worksheet[f'D{row}'].value == "Submitted":
@@ -1263,6 +1263,11 @@ def formatTimeByDate(worksheet):
             highlightRow(worksheet, row, color=orange)  
         else:
             highlightRow(worksheet, row)
+
+    # add a fill for columns that are non-billable
+    for column in ['H', 'I', 'J']:
+        for row in range(1, stop):
+            worksheet[column][row].fill = gray
 
     # add a fill for columns to show that they are are summary columns
     for column in ['O', 'P', 'Q']:
@@ -1311,7 +1316,7 @@ def formatTimeByEmployee(worksheet):
     sumColumn(worksheet, 'O', 'number', start, stop, top=True)
     sumColumn(worksheet, 'P', 'number', start, stop, top=True)
 
-    for row in range(3, stop):
+    for row in range(3, stop + 1):
         if worksheet[f'C{row}'].value == "Approved":
             pass
         elif worksheet[f'C{row}'].value == "Submitted":
@@ -1323,7 +1328,11 @@ def formatTimeByEmployee(worksheet):
         else:
             highlightRow(worksheet, row)
 
-     # add a fill for columns to show that they are are summary columns
+    # add a fill for columns that are non-billable
+    for column in ['G', 'H', 'I']:
+        for row in range(1, stop):
+            worksheet[column][row].fill = gray
+    # add a fill for columns to show that they are are summary columns
     for column in ['N', 'O', 'P']:
         for row in range(1, stop):
             worksheet[column][row].fill = lightBlue

@@ -1,4 +1,7 @@
 #!/usr/local/bin/python
+import sys
+import os
+import glob
 import re
 from datetime import datetime
 from ast import literal_eval
@@ -12,8 +15,12 @@ from openpyxl import load_workbook
 from InvoiceStyles import styles
 from InvoiceFormat import formatTimeByDate, formatTimeByEmployee
 
-baseYear = '0'
-upchargeRate = 0.35
+from Config import Config
+config = Config()
+
+contractNumber = config.data['contractNumber']
+baseYear = config.data['baseYear']
+upchargeRate = config.data['upchargeRate']
 
 TaskNames = {
 	'3322': 'Regular',
@@ -212,6 +219,9 @@ class EmployeeTime:
 	def startMonth(self):
 		# the month should be zero padded
 		return self.dateStart.strftime('%m')
+	
+	def startMonthName(self):
+		return self.dateStart.strftime('%b')
 	
 	def billingPeriod(self):
 		startMonthName = self.dateStart.strftime('%b')
@@ -457,7 +467,8 @@ class EmployeeTime:
 
 		pivot = pivot[[
 			'Region', 'EmployeeName', 'SubCLIN', 'State',
-			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
+			'Regular', 'LocalHoliday', 'Admin', 
+			'Holiday', 'Vacation', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal'
 		]]
@@ -490,16 +501,38 @@ class EmployeeTime:
 
 		pivot = pivot[[
 			'Region', 'Date', 'EmployeeName', 'SubCLIN', 'State',
-			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
+			'Regular', 'LocalHoliday', 'Admin', 
+			'Holiday', 'Vacation', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal'
 		]]
 
 		return(pivot)
 
-if __name__ == '__main__':
-	import sys
+# note: this function is specific to the HoursStatus filename pattern
+def getUniquifier(pattern):
+	# look for previous instances of the status file
+	patternValues = re.findall(r'(.*)-(.*)-(.*)-(.*)', pattern)
+	baseName = patternValues[0][0]
+	region = patternValues[0][1]
+	year = patternValues[0][2]
+	mounthName = patternValues[0][3]
 
+	statusFiles = glob.glob(pattern + '*.xlsx')
+
+	version = 0
+	for file in statusFiles:
+		for vals in re.findall(r'(.*)-(.*)-(.*)-(.*)-(\d+)', file):
+			if vals[1] != region or vals[2] != year or vals[3] != mounthName:
+				continue
+			
+			thisVersion = int(vals[len(vals)-1])
+			version = max(version, thisVersion)
+
+	version += 1
+	return version
+
+if __name__ == '__main__':
 	billingRates = BillingRates(verbose=False)
 
 	activityFilename = sys.argv[1] if len(sys.argv) > 1 else None
@@ -516,8 +549,6 @@ if __name__ == '__main__':
 	data = time.groupedForInvoicing(clin='002', location='NATO')
 	now = pd.Timestamp.now().strftime("%m%d%H%M")
 
-	outputFile = f'Status-{time.startYear()}{time.startMonth()}-{now}.xlsx'
-
 	timeByDate = time.byDate()
 	timeByEmployee = time.byEmployee()
 
@@ -528,7 +559,9 @@ if __name__ == '__main__':
 		regionEmployee = timeByEmployee.loc[timeByEmployee['Region'] == region]
 		regionEmployee = regionEmployee.drop(columns=['Region'])
 
-		regionFile = f'Status-{region}-{time.startYear()}{time.startMonth()}-{now}.xlsx'
+		pattern = f'HoursStatus-{region}-{time.startYear()}-{time.startMonthName()}'
+		uniquifier = getUniquifier(pattern)
+		regionFile = f'{pattern}-{uniquifier:02d}.xlsx'
 
 		with pd.ExcelWriter(regionFile) as writer:
 			regionDate.to_excel(writer, sheet_name='Date', startrow=0, startcol=0, header=True, index=False)

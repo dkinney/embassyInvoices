@@ -3,60 +3,23 @@ import pandas as pd
 import numpy as np
 from openpyxl import load_workbook
 
-# from BillingActivity import BillingActivity
+from Config import Config
 from EmployeeTime import EmployeeTime
 from BillingRates import BillingRates
 from InvoiceStyles import styles
 from InvoiceFormat import formatInvoiceTab, formatCostsTab, formatHoursTab, formatHoursDetailsTab, formatDetailTab, formatSummaryTab, formatPostDetails
 
-versionString = 'v6'
+config = Config()
 
-Regions = {
-	'001': 'Asia',
-	'002': 'Europe'
-}
+Regions = {}
 
-CountryCodes = {
-	'China': 'CH',
-	'Hong Kong': 'HK',
-	'Vietnam': 'VN',
-	'Belgium': 'BE',
-	'Moldova': 'MD',
-	'Russia': 'RU',
-	'Ukraine': 'UA',
-	'NATO': 'NATO'
-}
+versionString = f'v{config.data["version"]}'
+CountryApprovers = config.data['approvers']
 
-CountryApprovers = {
-	'China': {
-		'MES': 'Christine Rosenquist – MES Resident Manager',
-		'COR': 'Michael Okamura – Senior Facility Manager – EAP COR-B'
-	},
-	'Hong Kong': {
-		'MES': 'Christine Rosenquist – MES Resident Manager',
-		'COR': 'Michael Okamura – Senior Facility Manager – EAP COR-B'
-	},
-	'Vietnam': {
-		'MES': 'Christine Rosenquist – MES Resident Manager',
-		'COR': 'Michael Okamura – Senior Facility Manager – EAP COR-B'
-	},
-	'Moldova': {
-		'MES': 'Kevin Carroll – MES Resident Manager',
-		'COR': 'Akram Elfeki - Senior Facility Manager – Moscow COR'
-	},
-	'Russia': {
-		'MES': 'Kevin Carroll – MES Resident Manager',
-		'COR': 'Akram Elfeki - Senior Facility Manager – Moscow COR'
-	},
-	'Ukraine': {
-		'MES': 'Kevin Carroll – MES Resident Manager',
-		'COR': 'Akram Elfeki - Senior Facility Manager – Moscow COR'
-	},
-	'NATO': {
-		'MES': 'Dustin Bergee – MES Resident Manager',
-		'COR': 'Robert Warner – DOS-COR-M'
-	}
-}
+# get region dictionary from config and swap keys and values
+# to make it easy to look up the region name from the CLIN
+for region in config.data['regions']:
+	Regions[config.data['regions'][region]] = region
 
 def processActivityFromFile(filename, startInvoiceNumber=0):
 	billingRates = BillingRates(verbose=False)
@@ -162,7 +125,7 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 
 				sheetName = f'Details-{location}'
 				details = activity.byDate(clin=clin, location=location)
-				details.drop(columns=['State', 'Region', 'Holiday', 'Vacation', 'Bereavement', 'HoursReg', 'HoursOT'], inplace=True)
+				details.drop(columns=['State', 'Region', 'Holiday', 'Vacation', 'Bereavement', 'HoursReg', 'HoursOT', 'SubCLIN'], inplace=True)
 				# rename some columns for space
 				details.rename(columns={
 					'EmployeeName': 'Name',
