@@ -1,0 +1,83 @@
+version: 6
+contractNumber: '19AQMM23C0047'
+baseYear: '0'
+upchargeRate: 0.35
+
+regions:
+  Asia: '001'
+  Europe: '002'
+
+approvers:
+  China:
+    MES: 'Christine Rosenquist – MES Resident Manager'
+    COR: 'Michael Okamura – Senior Facility Manager – EAP COR-B'
+  Hong Kong:
+    MES: 'Christine Rosenquist – MES Resident Manager'
+    COR: 'Michael Okamura – Senior Facility Manager – EAP COR-B'
+  Vietnam:
+    MES: 'Christine Rosenquist – MES Resident Manager'
+    COR: 'Michael Okamura – Senior Facility Manager – EAP COR-B'
+  Moldova:
+    MES: 'Kevin Carroll – MES Resident Manager'
+    COR: 'Akram Elfeki - Senior Facility Manager – Moscow COR'
+  Russia:
+    MES: 'Kevin Carroll – MES Resident Manager'
+    COR: 'Akram Elfeki - Senior Facility Manager – Moscow COR'
+  Ukraine:
+    MES: 'Kevin Carroll – MES Resident Manager'
+    COR: 'Akram Elfeki - Senior Facility Manager – Moscow COR'
+  NATO:
+    MES: 'Dustin Bergee – MES Resident Manager'
+    COR: 'Robert Warner – DOS-COR-M'
+
+address:
+  line1: 'MEC Energy Services'
+  line2: '3949 Hwy 8, Suite 110'
+  line3: 'New Town, ND 48763'
+  line4: 'TIN: 753209819'
+  line5:
+  line6:
+
+billTo:
+  line1: 'IPP'
+  line2: 'GLobal Financial Services Center'
+  line3: 'P.O. Box 150008'
+  line4: 'ATTN: Office of Claims'
+  line5: 'Charleston, SC 29415-5008'
+  line6: 'Re: Helga Lumpkin'
+
+ach:
+  bank: 'Wells Fargo'
+  routing: 'Routing #: 121000248'
+  account: 'Account #: 299912421028'
+
+remitTo:
+  line1: 'Accounts Receivable'
+  line2: 'MEC Energy Services'
+  line3: '23808 Andrew Road, Unit 3'
+  line4: 'Plainfield, IL 60585'
+
+questions:
+  line1: 'Joe Santorelli'
+  line2: 'joe.santorelli@mandaree.com'
+  line3: '478.714.0070'
+
+paymentTerms:
+  line1: 'Net 30'
+  line2: 'Late Payment Fee: 1.5% per month'
+
+laborHeaders:
+  clin: 'CLIN'
+  description: 'Category'
+  type: 'Name'
+  quantity: 'Hours'
+  rate: 'Rate'
+  total: 'Amount'
+
+postHeaders:
+  clin: 'CLIN'
+  description: 'Location'
+  type: 'Type'
+  quantity: 'Amount'
+  rate: 'G&A'
+  total: 'Total'
