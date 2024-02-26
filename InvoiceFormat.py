@@ -13,6 +13,8 @@ from Config import Config
 config = Config()
 
 contractNumber = config.data['contractNumber']
+dataStyles = config.data['dataStyles']
+
 processingDate = datetime.datetime.now().strftime('%d %b %Y')
 
 thinSide = Side(style='thin', color="000000")
@@ -22,233 +24,6 @@ orange = PatternFill(start_color='FFA500', end_color='FFA500', fill_type='solid'
 gray = PatternFill(start_color='D3D3D3', end_color='D3D3D3', fill_type='solid')
 blue = PatternFill(start_color='21A7F2', end_color='21A7F2', fill_type='solid')
 lightBlue = PatternFill(start_color='DCE6F1', end_color='DCE6F1', fill_type='solid')
-
-dataStyles = {
-    'CLIN': {
-        'width': 10,
-        'style': 'defaultCell'
-    },
-    'SubCLIN': {
-        'width': 7,
-        'style': 'defaultCell'
-    },
-    'Description': {
-        'width': 25,
-        'style': 'defaultCell'
-    },
-    'Category': {
-        'width': 48,
-        'style': 'defaultCell'
-    },
-    'Title': {
-        'width': 28,
-        'style': 'defaultCell'
-    },
-    'Location': {
-        'width': 15,
-        'style': 'defaultCell'
-    },
-    'City': {
-        'width': 15,
-        'style': 'defaultCell'
-    },
-    'Name': {
-        'width': 18,
-        'style': 'defaultCell'
-    },
-    'State': {
-        'width': 10,
-        'style': 'defaultCell'
-    },
-    'Number': {
-        'width': 10,
-        'style': 'defaultCell'
-    },
-    'Hours': {
-        'width': 9,
-        'style': 'numberCell'
-    },
-    'Percentage': {
-        'width': 10,
-        'style': 'percentageCell'
-    },
-    'Regular Rate': {
-        'width': 12,
-        'style': 'currencyCell'
-    },
-    'Overtime Rate': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Regular': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Regular Hours': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'On-Call OT': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Scheduled OT': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Unscheduled OT': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Overtime': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Local Holiday': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Admin': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Subtotal': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Regular Wages': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Post Rate': {
-        'width': 12,
-        'style': 'percentageCell'
-    },
-    'Hazard Rate': {
-        'width': 12,
-        'style': 'percentageCell'
-    },
-    'Posting': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Hazard': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Upcharge': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Total': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Total Post': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Total Hazard': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Total Regular': {
-        'width': 20,
-        'style': 'currencyCell'
-    },
-    'Total Overtime': {
-        'width': 20,
-        'style': 'currencyCell'
-    },
-    'Total Billing': {
-        'width': 20,
-        'style': 'currencyCell'
-    },
-    'Wages': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Posting Pay': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Hazard Pay': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Date': {
-        'width': 15,
-        'style': 'dateCell'
-    },
-    'ContractID': {
-        'width': 20,
-        'style': 'defaultCell'
-    },
-    'Task ID': {
-        'width': 8,
-        'style': 'defaultCell'
-    },
-    'Task Name': {
-        'width': 12,
-        'style': 'defaultCell'
-    },
-    'Descr': {
-        'width': 54,
-        'style': 'defaultCell'
-    },
-    'EmbeddedAdmin': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'SummarySubCLIN': {
-        'width': 7,
-        'style': 'textCell'
-    },
-    'SummaryDescription': {
-        'width': 25,
-        'style': 'textCell'
-    },
-    'SummaryName': {
-        'width': 18,
-        'style': 'textCell'
-    },
-    'SummaryHours': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Rate': {
-        'width': 10,
-        'style': 'currencyCell'
-    },
-    'SummaryRate': {
-        'width': 8,
-        'style': 'currencyCell'
-    },
-    'SummaryTotal': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'InvoiceNumber': {
-        'width': 20,
-        'style': 'defaultCell'
-    },
-    'TaskOrder': {
-        'width': 15,
-        'style': 'defaultCell'
-    },
-    'InvoiceAmount': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Filename': {
-        'width': 25,
-        'style': 'defaultCell'
-    },
-    'BillingPeriod': {
-        'width': 25,
-        'style': 'defaultCell'
-    },
-}
 
 def styleColumn(worksheet, column, type, rowStart = None, rowStop = None):
     start = 0 if rowStart is None else rowStart
@@ -831,24 +606,22 @@ def formatFullDetailsTab(worksheet):
 def formatSummaryTab(worksheet):
     worksheet.delete_cols(1, 1)
 
-    styleColumn(worksheet, 'A', 'Description')
-    styleColumn(worksheet, 'B', 'CLIN')
-    styleColumn(worksheet, 'C', 'Filename')
-    styleColumn(worksheet, 'D', 'CLIN')
-    styleColumn(worksheet, 'E', 'InvoiceNumber')
-    styleColumn(worksheet, 'F', 'TaskOrder')
-    styleColumn(worksheet, 'G', 'BillingPeriod')
-    styleColumn(worksheet, 'H', 'InvoiceAmount')
+    styleColumn(worksheet, 'A', 'Filename')
+    styleColumn(worksheet, 'B', 'Type')
+    styleColumn(worksheet, 'C', 'InvoiceNumber')
+    styleColumn(worksheet, 'D', 'TaskOrder')
+    styleColumn(worksheet, 'E', 'Total')
 
-    # create a table
-    table = Table(displayName='Detail', ref="A1:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
-    worksheet.add_table(table)
-    worksheet.freeze_panes = worksheet['A2']
+    for column in ['A', 'B', 'C', 'D', 'E']:
+        worksheet[column + '1'].style = 'summaryTitle'
+
+        for r in range(1, worksheet.max_row + 1):
+                worksheet[column + str(r)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
 
     # add SUM() formulas
     start = 2
     stop = worksheet.max_row
-    sumColumn(worksheet, 'H', 'currency', start, stop)
+    sumColumn(worksheet, 'E', 'currency', start, stop)
 
 def formatDaysTab(worksheet):
     worksheet.insert_rows(1, 1)

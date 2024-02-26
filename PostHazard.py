@@ -15,7 +15,6 @@ class PostHazard:
         # convert the rates to a percentage
         df['PostingRate'] = df['PostingRate'] * 0.01
         df['HazardRate'] = df['HazardRate'] * 0.01
-
         df = df.groupby('PostName').apply(lambda x: x.loc[x['EffectiveDate'] <= self.effectiveDate].sort_values(by='EffectiveDate', ascending=False).head(1)).reset_index(drop=True)
         self.data = df
 

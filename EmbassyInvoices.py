@@ -1,4 +1,6 @@
 #!/usr/local/bin/python
+import glob
+import re
 import pandas as pd
 import numpy as np
 from openpyxl import load_workbook
@@ -21,9 +23,32 @@ CountryApprovers = config.data['approvers']
 for region in config.data['regions']:
 	Regions[config.data['regions'][region]] = region
 
-def processActivityFromFile(filename, startInvoiceNumber=0):
-	billingRates = BillingRates(verbose=False)
+def getUniquifier(pattern, type=None, region=None, year=None, monthName=None):
+	# look for previous instances of the status file
+	patternValues = re.findall(r'(.*)-(.*)-(.*)-(.*)', pattern)
+	patternType = patternValues[0][0]
+	patterRegion = patternValues[0][1]
+	patternYear = patternValues[0][2]
+	patternMonthhName = patternValues[0][3]
 
+	statusFiles = glob.glob(pattern + '*.xlsx')
+
+	version = 0
+	for file in statusFiles:
+		for vals in re.findall(r'(.*)-(.*)-(.*)-(.*)-(\d+)', file):
+			typeMatches = type is None or type is not None and vals[0] == type
+			regionMatches = region is None or region is not None and vals[1] == region
+			yearMatches = year is None or year is not None and vals[2] == year
+			monthMatches = monthName is None or monthName is not None and vals[3] == monthName
+
+			if typeMatches and regionMatches and yearMatches and monthMatches:
+				thisVersion = int(vals[len(vals)-1])
+				version = max(version, thisVersion)
+
+	version += 1
+	return version
+
+def processActivityFromFile(filename, startInvoiceNumber=0):
 	print(f'Processing activity from {filename}...')
 	invoiceSummary = []
 
@@ -31,11 +56,13 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 		print(f'Usage: {sys.argv[0]} <billing activity file>')
 		return invoiceDetail
 
-	# activity = BillingActivity(filename, verbose=False)
 	activity = EmployeeTime(filename, verbose=False)
+	effectiveDate = activity.dateEnd
+	billingRates = BillingRates(effectiveDate=effectiveDate, verbose=False)
 	activity.joinWith(billingRates)
 
-	confirm = activity.data[activity.data['CLIN'].isnull()]
+	# do we have any activity for a clin other than 001 or 002?
+	confirm = activity.data[~activity.data['CLIN'].isin(['001', '002'])]
 
 	if not confirm.empty:
 		print('\nERROR ----------------------------------------')
@@ -61,9 +88,11 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 		# Labor
 		##########################################################
 
-		outputFile = f'Labor-{startYear}{startMonth}-{region}-{versionString}.xlsx'
+		reportType = 'Labor'
+		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
+		uniquifier = getUniquifier(pattern, type=reportType, region=region, year=startYear, monthName=startMonth)
+		outputFile = f'{pattern}-{uniquifier:02d}.xlsx'
 		
-
 		sheetInfo = {}
 
 		with pd.ExcelWriter(outputFile) as writer:
@@ -95,8 +124,8 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 				billingPeriod = activity.billingPeriod()
 
 				invoiceDetail = {
-					'description': f'{activity.dateStart.strftime("%B")} {startYear}',
-					'region': location,
+					# 'description': f'{activity.dateStart.strftime("%B")} {startYear}',
+					# 'region': location,
 					'filename': outputFile,
 					'type': 'Labor',
 					'invoiceNumber': invoiceNumber,
@@ -113,9 +142,12 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 		# Hours Report (for signatures)
 		##########################################################
 				
-		hoursReportFile = f'Hours-{startYear}{startMonth}-{region}-{versionString}.xlsx'
+		reportType = 'Hours'
+		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
+		uniquifier = getUniquifier(pattern, type=reportType, region=region, year=startYear, monthName=startMonth)
+		hoursOutputFile = f'{pattern}-{uniquifier:02d}.xlsx'
 
-		with pd.ExcelWriter(hoursReportFile) as writer:
+		with pd.ExcelWriter(hoursOutputFile) as writer:
 			for location in locationInfo[clin]:
 				sheetName = f'Hours-{location}'
 				# print(f'Writing hours for {location} into {sheetName}...')
@@ -137,7 +169,7 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 				}, inplace=True)
 				details.to_excel(writer, sheet_name=sheetName, startrow=0, startcol=0, header=True, index=False)
 
-		hoursWorkbook = load_workbook(hoursReportFile)
+		hoursWorkbook = load_workbook(hoursOutputFile)
 		for styleName in styles.keys():
 			hoursWorkbook.add_named_style(styles[styleName])
 
@@ -152,7 +184,7 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 			worksheet = hoursWorkbook[f'Details-{location}']
 			formatHoursDetailsTab(worksheet, locationName=location, billingFrom=activity.billingPeriod())
 		
-		hoursWorkbook.save(hoursReportFile)
+		hoursWorkbook.save(hoursOutputFile)
 		
 		# Apply formatting in place
 		workbook = load_workbook(outputFile)
@@ -171,8 +203,10 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 		# PostHazard Costs
 		##########################################################
 
-		outputFile = f'Post-{startYear}{startMonth}-{region}-{versionString}.xlsx'
-		costInvoiceNumber = f'SDEC-{startYear}{startMonth}'
+		reportType = 'Post'
+		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
+		uniquifier = getUniquifier(pattern, type=reportType, region=region, year=startYear, monthName=startMonth)
+		outputFile = f'{pattern}-{uniquifier:02d}.xlsx'
 
 		sheetInfo = {}
 		firstRow = 3
@@ -214,8 +248,8 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 				billingPeriod = f'{activity.dateStart.day} {startMonthName} {activity.dateStart.year} - {activity.dateEnd.day} {endMonthName} {activity.dateEnd.year}'
 
 				invoiceDetail = {
-					'description': f'{activity.dateStart.strftime("%B")} {startYear}',
-					'region': region,
+					# 'description': f'{activity.dateStart.strftime("%B")} {startYear}',
+					# 'region': region,
 					'filename': outputFile,
 					'type': 'Post',
 					'invoiceNumber': invoiceNumber,
@@ -269,7 +303,10 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 		# Details
 		##########################################################
 
-		outputFile = f'Details-{startYear}{startMonth}-{region}-{versionString}.xlsx'
+		reportType = 'Details'
+		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
+		uniquifier = getUniquifier(pattern, type=reportType, region=region, year=startYear, monthName=startMonth)
+		outputFile = f'{pattern}-{uniquifier:02d}.xlsx'
 
 		# There is only one tab in the workbook
 		sheetName = f'Details-{region}'
@@ -292,7 +329,7 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 
 def showResult(resultDictionary):
 	result = pd.DataFrame(resultDictionary)
-	result.drop(columns=['rowsToSum', 'postRows', 'postDetailRows', 'hazardRows', 'hazardDetailRows'], inplace=True)
+	result.drop(columns=['billingPeriod', 'rowsToSum', 'postRows', 'postDetailRows', 'hazardRows', 'hazardDetailRows'], inplace=True)
 	print(result)
 
 if __name__ == '__main__':
@@ -323,8 +360,8 @@ if __name__ == '__main__':
 	# 	invoices.drop(columns=['rowsToSum'], inplace=True)
 
 	invoices.rename(columns={
-		'description': 'Description',
-		'region': 'Region',
+		# 'description': 'Description',
+		# 'region': 'Region',
 		'filename': 'Filename',
 		'type': 'Type',
 		'invoiceNumber': 'Invoice Number',
@@ -338,6 +375,9 @@ if __name__ == '__main__':
 	now = pd.Timestamp.now().strftime("%Y%m%d%H%M")
 
 	outputFile = f'Summary-{now}.xlsx'
+
+	# if 'Billing Period' in invoices.columns:
+	invoices.drop(columns=['Billing Period'], inplace=True)
 
 	with pd.ExcelWriter(outputFile) as writer:
 		invoices.to_excel(writer, sheet_name='Summary', startrow=0, startcol=0, header=True)

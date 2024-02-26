@@ -14,11 +14,12 @@ Regions = {
 class BillingRates:
 	def __init__(self, filename=None, effectiveDate=None, verbose=False):
 		self.data = None			# a dataframe containing information loaded from a file and cleaned
-		self.effectiveDate = effectiveDate if effectiveDate is not None else pd.to_datetime('today').strftime('%Y-%m-%d')
-		if filename is None:
-			self.loadData('data/BillingRates.xlsx', verbose)
-		else:
-			self.loadData(filename, verbose)
+		self.effectiveDate = pd.to_datetime(effectiveDate) if effectiveDate is not None else pd.to_datetime('today')
+
+		ratesFilename = filename if filename is not None else 'data/BillingRates.xlsx'
+
+		print(f'Getting billing rates effective as of {effectiveDate} from {ratesFilename}')
+		self.loadData(ratesFilename, verbose)
 
 		employees = EmployeeInfo(verbose=verbose)
 		self.joinWith(employees)
@@ -29,6 +30,8 @@ class BillingRates:
 			print(self.data)
 
 	def loadData(self, filename, verbose=False):
+		print('Loading billing rates from', filename)
+
 		# Define the data type will be used when reading in the data
 		# By default, it will try to make columns that only have numbers into numbers.
 		converters = {
@@ -49,26 +52,21 @@ class BillingRates:
 
 		# strip whitespace from all string columns
 		df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+		df = df.groupby('SubCLIN').apply(lambda x: x.loc[x['EffectiveDate'] <= self.effectiveDate].sort_values(by='EffectiveDate', ascending=True).head(1)).reset_index(drop=True)
 
-		# this returns ALL rates, including effective past and future
 		if verbose:
 			print(f'Loaded {len(df)} labor rates from {filename}')
 			print(df)
 
 		self.data = df
+
 	
 	def joinWith(self, employees: EmployeeInfo):
 		if employees.data is None:
 			# nothing to do
 			return
 
-		# filter the billing rates based on the effective date
-		billingData = self.data.groupby('SubCLIN').apply(lambda x: x.loc[x['EffectiveDate'] <= self.effectiveDate].sort_values(by='EffectiveDate', ascending=False).head(1)).reset_index(drop=True)
-
-		joined = employees.data.join(billingData.set_index('SubCLIN'), on='SubCLIN', how='left', rsuffix='_rates')
-
-		# reorder the columns to be more useful
-		joined = joined[['EmployeeName', 'EmployeeID', 'CLIN', 'SubCLIN', 'Location', 'City', 'Category', 'Title', 'HourlyRateReg', 'HourlyRateOT', 'BillRateReg', 'BillRateOT', 'EffectiveDate']]
+		joined = employees.data.join(self.data.set_index('SubCLIN'), on='SubCLIN', how='left', rsuffix='_rates')
 		
 		postHazard = PostHazard(effectiveDate=self.effectiveDate)
 		joined = joined.join(postHazard.data.set_index('PostName'), on='City', how='left', rsuffix='_post')
@@ -90,24 +88,27 @@ class BillingRates:
 if __name__ == '__main__':
 	import sys
 	
-	# By default, uses the file "BillingRates.xlsx" within the data directory
-	# unless a filename is provided as a command line argument.
-	billingRatesFilename = sys.argv[1] if len(sys.argv) > 1 else None
+	# Uses the file "BillingRates.xlsx" within the data directory
 
-	effectiveDate = pd.to_datetime('2024-02-29').strftime('%Y-%m-%d')
-	billingRates = BillingRates(billingRatesFilename, effectiveDate=effectiveDate, verbose=False)
+	if len(sys.argv) < 2:
+		print(f'Usage: {sys.argv[0]} [YYYY-MM-DD]')
+		sys.exit(1)
 
-	employees = EmployeeInfo(verbose=False)
+	# Uses the effective date provided, or today's date if not provided
+	date = sys.argv[1] if len(sys.argv) > 1 else None
 
-	if employees.data is not None:
-		billingRates.joinWith(employees)
+	# effectiveDate = pd.to_datetime(date)
+	billingRates = BillingRates(effectiveDate=date, verbose=False)
+
 
 	outputFile = 'EmployeeBillingRates.xlsx'
 
 	tabData = {}
 
-	billingRates.data['CLIN'].fillna('Unknown', inplace=True)
-	print(f'{len(billingRates.data)} employees for {billingRates.data["CLIN"].unique()}')
+	billingRates.data.sort_values(by=['CLIN', 'SubCLIN', 'EmployeeName'], ascending=True, inplace=True)
+	billingRates.data.fillna('Unknown', inplace=True)
+
+	print(f'{len(billingRates.data)} employees for clins {billingRates.data["CLIN"].unique()}')
 
 	for clin in billingRates.data['CLIN'].unique():
 		try:
@@ -116,10 +117,6 @@ if __name__ == '__main__':
 			region = 'Unknown'
 
 		data = billingRates.data[billingRates.data['CLIN'] == clin]
-
-		print(f'Writing to {outputFile} to sheet {region} for {len(data)} employees')
-		print(data)
-
 		tabData[region] = data
 
 	with pd.ExcelWriter(outputFile) as writer:

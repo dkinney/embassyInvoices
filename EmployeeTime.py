@@ -508,26 +508,28 @@ class EmployeeTime:
 		]]
 
 		return(pivot)
-
-# note: this function is specific to the HoursStatus filename pattern
-def getUniquifier(pattern):
+	
+def getUniquifier(pattern, type=None, region=None, year=None, monthName=None):
 	# look for previous instances of the status file
 	patternValues = re.findall(r'(.*)-(.*)-(.*)-(.*)', pattern)
-	baseName = patternValues[0][0]
-	region = patternValues[0][1]
-	year = patternValues[0][2]
-	mounthName = patternValues[0][3]
+	patternType = patternValues[0][0]
+	patterRegion = patternValues[0][1]
+	patternYear = patternValues[0][2]
+	patternMonthhName = patternValues[0][3]
 
 	statusFiles = glob.glob(pattern + '*.xlsx')
 
 	version = 0
 	for file in statusFiles:
 		for vals in re.findall(r'(.*)-(.*)-(.*)-(.*)-(\d+)', file):
-			if vals[1] != region or vals[2] != year or vals[3] != mounthName:
-				continue
-			
-			thisVersion = int(vals[len(vals)-1])
-			version = max(version, thisVersion)
+			typeMatches = type is None or type is not None and vals[0] == type
+			regionMatches = region is None or region is not None and vals[1] == region
+			yearMatches = year is None or year is not None and vals[2] == year
+			monthMatches = monthName is None or monthName is not None and vals[3] == monthName
+
+			if typeMatches and regionMatches and yearMatches and monthMatches:
+				thisVersion = int(vals[len(vals)-1])
+				version = max(version, thisVersion)
 
 	version += 1
 	return version
@@ -560,7 +562,7 @@ if __name__ == '__main__':
 		regionEmployee = regionEmployee.drop(columns=['Region'])
 
 		pattern = f'HoursStatus-{region}-{time.startYear()}-{time.startMonthName()}'
-		uniquifier = getUniquifier(pattern)
+		uniquifier = getUniquifier(pattern, type='HoursStatus', region=region, year=time.startYear(), monthName=time.startMonthName())
 		regionFile = f'{pattern}-{uniquifier:02d}.xlsx'
 
 		with pd.ExcelWriter(regionFile) as writer:

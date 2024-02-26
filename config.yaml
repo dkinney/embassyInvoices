@@ -81,3 +81,176 @@ postHeaders:
   quantity: 'Amount'
   rate: 'G&A'
   total: 'Total'
+
+dataStyles:
+  CLIN:
+    width: 10,
+    style: 'defaultCell'
+  SubCLIN:
+    width: 7
+    style: 'defaultCell'
+  Description:
+    width: 25
+    style: 'defaultCell'
+  Category:
+    width: 48
+    style: 'defaultCell'
+  Title:
+    width: 28
+    style: 'defaultCell'
+  Location:
+    width: 15
+    style: 'defaultCell'
+  City:
+    width: 15
+    style: 'defaultCell'
+  Name:
+    width: 18
+    style: 'defaultCell'
+  State:
+    width: 10
+    style: 'defaultCell'
+  Number:
+    width: 10
+    style: 'defaultCell'
+  Hours:
+    width: 9
+    style: 'numberCell'
+  Percentage:
+    width: 10
+    style: 'percentageCell'
+  Regular Rate:
+    width: 12
+    style: 'currencyCell'
+  Overtime Rate:
+    width: 15
+    style: 'currencyCell'
+  Regular:
+    width: 12
+    style: 'numberCell'
+  Regular Hours:
+    width: 12
+    style: 'numberCell'
+  On-Call OT:
+    width: 12
+    style: 'numberCell'
+  Scheduled OT:
+    width: 12
+    style: 'numberCell'
+  Unscheduled OT:
+    width: 12
+    style: 'numberCell'
+  Overtime:
+    width: 12
+    style: 'numberCell'
+  Local Holiday:
+    width: 12
+    style: 'numberCell'
+  Admin:
+    width: 12
+    style: 'numberCell'
+  Subtotal:
+    width: 12
+    style: 'numberCell'
+  Regular Wages:
+    width: 15
+    style: 'currencyCell'
+  Post Rate:
+    width: 12
+    style: 'percentageCell'
+  Hazard Rate:
+    width: 12
+    style: 'percentageCell'
+  Posting:
+    width: 15
+    style: 'currencyCell'
+  Hazard:
+    width: 15
+    style: 'currencyCell'
+  Upcharge:
+    width: 15
+    style: 'currencyCell'
+  Total:
+    width: 15
+    style: 'currencyCell'
+  Total Post:
+    width: 15
+    style: 'currencyCell'
+  Total Hazard:
+    width: 15
+    style: 'currencyCell'
+  Total Regular:
+    width: 20
+    style: 'currencyCell'
+  Total Overtime:
+    width: 20
+    style: 'currencyCell'
+  Total Billing:
+    width: 20
+    style: 'currencyCell'
+  Wages:
+    width: 15
+    style: 'currencyCell'
+  Posting Pay:
+    width: 15
+    style: 'currencyCell'
+  Hazard Pay:
+    width: 15
+    style: 'currencyCell'
+  Date:
+    width: 15
+    style: 'dateCell'
+  ContractID:
+    width: 20
+    style: 'defaultCell'
+  Task ID:
+    width: 8
+    style: 'defaultCell'
+  Task Name:
+    width: 12
+    style: 'defaultCell'
+  Descr:
+    width: 54
+    style: 'defaultCell'
+  EmbeddedAdmin:
+    width: 12
+    style: 'numberCell'
+  SummarySubCLIN:
+    width: 7
+    style: 'textCell'
+  SummaryDescription:
+    width: 25
+    style: 'textCell'
+  SummaryName:
+    width: 18
+    style: 'textCell'
+  SummaryHours:
+    width: 12
+    style: 'numberCell'
+  Rate:
+    width: 10
+    style: 'currencyCell'
+  SummaryRate:
+    width: 8
+    style: 'currencyCell'
+  SummaryTotal:
+    width: 15
+    style: 'currencyCell'
+  InvoiceNumber:
+    width: 20
+    style: 'defaultCell'
+  TaskOrder:
+    width: 15
+    style: 'defaultCell'
+  InvoiceAmount:
+    width: 15
+    style: 'currencyCell'
+  Filename:
+    width: 25
+    style: 'defaultCell'
+  BillingPeriod:
+    width: 25
+    style: 'defaultCell'
+  Type:
+    width: 10
+    style: 'defaultCell'
