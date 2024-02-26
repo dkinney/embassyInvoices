@@ -1,256 +1,246 @@
-version: 6
-contractNumber: '19AQMM23C0047'
+ach:
+  account: 'Account #: 299912421028'
+  bank: Wells Fargo
+  routing: 'Routing #: 121000248'
+address:
+  line1: MEC Energy Services
+  line2: 3949 Hwy 8, Suite 110
+  line3: New Town, ND 48763
+  line4: 'TIN: 753209819'
+  line5: null
+  line6: null
+approvers:
+  China:
+    COR: "Michael Okamura \u2013 Senior Facility Manager \u2013 EAP COR-B"
+    MES: "Christine Rosenquist \u2013 MES Resident Manager"
+  Hong Kong:
+    COR: "Michael Okamura \u2013 Senior Facility Manager \u2013 EAP COR-B"
+    MES: "Christine Rosenquist \u2013 MES Resident Manager"
+  Moldova:
+    COR: "Akram Elfeki - Senior Facility Manager \u2013 Moscow COR"
+    MES: "Kevin Carroll \u2013 MES Resident Manager"
+  NATO:
+    COR: "Robert Warner \u2013 DOS-COR-M"
+    MES: "Dustin Bergee \u2013 MES Resident Manager"
+  Russia:
+    COR: "Akram Elfeki - Senior Facility Manager \u2013 Moscow COR"
+    MES: "Kevin Carroll \u2013 MES Resident Manager"
+  Ukraine:
+    COR: "Akram Elfeki - Senior Facility Manager \u2013 Moscow COR"
+    MES: "Kevin Carroll \u2013 MES Resident Manager"
+  Vietnam:
+    COR: "Michael Okamura \u2013 Senior Facility Manager \u2013 EAP COR-B"
+    MES: "Christine Rosenquist \u2013 MES Resident Manager"
 baseYear: '0'
-upchargeRate: 0.35
-
+billTo:
+  line1: IPP
+  line2: GLobal Financial Services Center
+  line3: P.O. Box 150008
+  line4: 'ATTN: Office of Claims'
+  line5: Charleston, SC 29415-5008
+  line6: 'Re: Helga Lumpkin'
+contractNumber: 19AQMM23C0047
+dataStyles:
+  Admin:
+    style: numberCell
+    width: 12
+  BillingPeriod:
+    style: defaultCell
+    width: 25
+  CLIN:
+    style: defaultCell
+    width: 10,
+  Category:
+    style: defaultCell
+    width: 48
+  City:
+    style: defaultCell
+    width: 15
+  ContractID:
+    style: defaultCell
+    width: 20
+  Date:
+    style: dateCell
+    width: 15
+  Descr:
+    style: defaultCell
+    width: 54
+  Description:
+    style: defaultCell
+    width: 25
+  EmbeddedAdmin:
+    style: numberCell
+    width: 12
+  Filename:
+    style: defaultCell
+    width: 25
+  Hazard:
+    style: currencyCell
+    width: 15
+  Hazard Pay:
+    style: currencyCell
+    width: 15
+  Hazard Rate:
+    style: percentageCell
+    width: 12
+  Hours:
+    style: numberCell
+    width: 9
+  InvoiceAmount:
+    style: currencyCell
+    width: 15
+  InvoiceNumber:
+    style: defaultCell
+    width: 20
+  Local Holiday:
+    style: numberCell
+    width: 12
+  Location:
+    style: defaultCell
+    width: 15
+  Name:
+    style: defaultCell
+    width: 18
+  Number:
+    style: defaultCell
+    width: 10
+  On-Call OT:
+    style: numberCell
+    width: 12
+  Overtime:
+    style: numberCell
+    width: 12
+  Overtime Rate:
+    style: currencyCell
+    width: 15
+  Percentage:
+    style: percentageCell
+    width: 10
+  Post Rate:
+    style: percentageCell
+    width: 12
+  Posting:
+    style: currencyCell
+    width: 15
+  Posting Pay:
+    style: currencyCell
+    width: 15
+  Rate:
+    style: currencyCell
+    width: 10
+  Regular:
+    style: numberCell
+    width: 12
+  Regular Hours:
+    style: numberCell
+    width: 12
+  Regular Rate:
+    style: currencyCell
+    width: 12
+  Regular Wages:
+    style: currencyCell
+    width: 15
+  Scheduled OT:
+    style: numberCell
+    width: 12
+  State:
+    style: defaultCell
+    width: 10
+  SubCLIN:
+    style: defaultCell
+    width: 7
+  Subtotal:
+    style: numberCell
+    width: 12
+  SummaryDescription:
+    style: textCell
+    width: 25
+  SummaryHours:
+    style: numberCell
+    width: 12
+  SummaryName:
+    style: textCell
+    width: 18
+  SummaryRate:
+    style: currencyCell
+    width: 8
+  SummarySubCLIN:
+    style: textCell
+    width: 7
+  SummaryTotal:
+    style: currencyCell
+    width: 15
+  Task ID:
+    style: defaultCell
+    width: 8
+  Task Name:
+    style: defaultCell
+    width: 12
+  TaskOrder:
+    style: defaultCell
+    width: 15
+  Title:
+    style: defaultCell
+    width: 28
+  Total:
+    style: currencyCell
+    width: 15
+  Total Billing:
+    style: currencyCell
+    width: 20
+  Total Hazard:
+    style: currencyCell
+    width: 15
+  Total Overtime:
+    style: currencyCell
+    width: 20
+  Total Post:
+    style: currencyCell
+    width: 15
+  Total Regular:
+    style: currencyCell
+    width: 20
+  Type:
+    style: defaultCell
+    width: 10
+  Unscheduled OT:
+    style: numberCell
+    width: 12
+  Upcharge:
+    style: currencyCell
+    width: 15
+  Wages:
+    style: currencyCell
+    width: 15
+laborHeaders:
+  clin: CLIN
+  description: Category
+  quantity: Hours
+  rate: Rate
+  total: Amount
+  type: Name
+nextInvoiceNumber: 19
+paymentTerms:
+  line1: Net 30
+  line2: 'Late Payment Fee: 1.5% per month'
+postHeaders:
+  clin: CLIN
+  description: Location
+  quantity: Amount
+  rate: G&A
+  total: Total
+  type: Type
+questions:
+  line1: Joe Santorelli
+  line2: joe.santorelli@mandaree.com
+  line3: 478.714.0070
 regions:
   Asia: '001'
   Europe: '002'
-
-approvers:
-  China:
-    MES: 'Christine Rosenquist – MES Resident Manager'
-    COR: 'Michael Okamura – Senior Facility Manager – EAP COR-B'
-  Hong Kong:
-    MES: 'Christine Rosenquist – MES Resident Manager'
-    COR: 'Michael Okamura – Senior Facility Manager – EAP COR-B'
-  Vietnam:
-    MES: 'Christine Rosenquist – MES Resident Manager'
-    COR: 'Michael Okamura – Senior Facility Manager – EAP COR-B'
-  Moldova:
-    MES: 'Kevin Carroll – MES Resident Manager'
-    COR: 'Akram Elfeki - Senior Facility Manager – Moscow COR'
-  Russia:
-    MES: 'Kevin Carroll – MES Resident Manager'
-    COR: 'Akram Elfeki - Senior Facility Manager – Moscow COR'
-  Ukraine:
-    MES: 'Kevin Carroll – MES Resident Manager'
-    COR: 'Akram Elfeki - Senior Facility Manager – Moscow COR'
-  NATO:
-    MES: 'Dustin Bergee – MES Resident Manager'
-    COR: 'Robert Warner – DOS-COR-M'
-
-address:
-  line1: 'MEC Energy Services'
-  line2: '3949 Hwy 8, Suite 110'
-  line3: 'New Town, ND 48763'
-  line4: 'TIN: 753209819'
-  line5:
-  line6:
-
-billTo:
-  line1: 'IPP'
-  line2: 'GLobal Financial Services Center'
-  line3: 'P.O. Box 150008'
-  line4: 'ATTN: Office of Claims'
-  line5: 'Charleston, SC 29415-5008'
-  line6: 'Re: Helga Lumpkin'
-
-ach:
-  bank: 'Wells Fargo'
-  routing: 'Routing #: 121000248'
-  account: 'Account #: 299912421028'
-
 remitTo:
-  line1: 'Accounts Receivable'
-  line2: 'MEC Energy Services'
-  line3: '23808 Andrew Road, Unit 3'
-  line4: 'Plainfield, IL 60585'
-
-questions:
-  line1: 'Joe Santorelli'
-  line2: 'joe.santorelli@mandaree.com'
-  line3: '478.714.0070'
-
-paymentTerms:
-  line1: 'Net 30'
-  line2: 'Late Payment Fee: 1.5% per month'
-
-laborHeaders:
-  clin: 'CLIN'
-  description: 'Category'
-  type: 'Name'
-  quantity: 'Hours'
-  rate: 'Rate'
-  total: 'Amount'
-
-postHeaders:
-  clin: 'CLIN'
-  description: 'Location'
-  type: 'Type'
-  quantity: 'Amount'
-  rate: 'G&A'
-  total: 'Total'
-
-dataStyles:
-  CLIN:
-    width: 10,
-    style: 'defaultCell'
-  SubCLIN:
-    width: 7
-    style: 'defaultCell'
-  Description:
-    width: 25
-    style: 'defaultCell'
-  Category:
-    width: 48
-    style: 'defaultCell'
-  Title:
-    width: 28
-    style: 'defaultCell'
-  Location:
-    width: 15
-    style: 'defaultCell'
-  City:
-    width: 15
-    style: 'defaultCell'
-  Name:
-    width: 18
-    style: 'defaultCell'
-  State:
-    width: 10
-    style: 'defaultCell'
-  Number:
-    width: 10
-    style: 'defaultCell'
-  Hours:
-    width: 9
-    style: 'numberCell'
-  Percentage:
-    width: 10
-    style: 'percentageCell'
-  Regular Rate:
-    width: 12
-    style: 'currencyCell'
-  Overtime Rate:
-    width: 15
-    style: 'currencyCell'
-  Regular:
-    width: 12
-    style: 'numberCell'
-  Regular Hours:
-    width: 12
-    style: 'numberCell'
-  On-Call OT:
-    width: 12
-    style: 'numberCell'
-  Scheduled OT:
-    width: 12
-    style: 'numberCell'
-  Unscheduled OT:
-    width: 12
-    style: 'numberCell'
-  Overtime:
-    width: 12
-    style: 'numberCell'
-  Local Holiday:
-    width: 12
-    style: 'numberCell'
-  Admin:
-    width: 12
-    style: 'numberCell'
-  Subtotal:
-    width: 12
-    style: 'numberCell'
-  Regular Wages:
-    width: 15
-    style: 'currencyCell'
-  Post Rate:
-    width: 12
-    style: 'percentageCell'
-  Hazard Rate:
-    width: 12
-    style: 'percentageCell'
-  Posting:
-    width: 15
-    style: 'currencyCell'
-  Hazard:
-    width: 15
-    style: 'currencyCell'
-  Upcharge:
-    width: 15
-    style: 'currencyCell'
-  Total:
-    width: 15
-    style: 'currencyCell'
-  Total Post:
-    width: 15
-    style: 'currencyCell'
-  Total Hazard:
-    width: 15
-    style: 'currencyCell'
-  Total Regular:
-    width: 20
-    style: 'currencyCell'
-  Total Overtime:
-    width: 20
-    style: 'currencyCell'
-  Total Billing:
-    width: 20
-    style: 'currencyCell'
-  Wages:
-    width: 15
-    style: 'currencyCell'
-  Posting Pay:
-    width: 15
-    style: 'currencyCell'
-  Hazard Pay:
-    width: 15
-    style: 'currencyCell'
-  Date:
-    width: 15
-    style: 'dateCell'
-  ContractID:
-    width: 20
-    style: 'defaultCell'
-  Task ID:
-    width: 8
-    style: 'defaultCell'
-  Task Name:
-    width: 12
-    style: 'defaultCell'
-  Descr:
-    width: 54
-    style: 'defaultCell'
-  EmbeddedAdmin:
-    width: 12
-    style: 'numberCell'
-  SummarySubCLIN:
-    width: 7
-    style: 'textCell'
-  SummaryDescription:
-    width: 25
-    style: 'textCell'
-  SummaryName:
-    width: 18
-    style: 'textCell'
-  SummaryHours:
-    width: 12
-    style: 'numberCell'
-  Rate:
-    width: 10
-    style: 'currencyCell'
-  SummaryRate:
-    width: 8
-    style: 'currencyCell'
-  SummaryTotal:
-    width: 15
-    style: 'currencyCell'
-  InvoiceNumber:
-    width: 20
-    style: 'defaultCell'
-  TaskOrder:
-    width: 15
-    style: 'defaultCell'
-  InvoiceAmount:
-    width: 15
-    style: 'currencyCell'
-  Filename:
-    width: 25
-    style: 'defaultCell'
-  BillingPeriod:
-    width: 25
-    style: 'defaultCell'
-  Type:
-    width: 10
-    style: 'defaultCell'
+  line1: Accounts Receivable
+  line2: MEC Energy Services
+  line3: 23808 Andrew Road, Unit 3
+  line4: Plainfield, IL 60585
+upchargeRate: 0.35
+version: 6

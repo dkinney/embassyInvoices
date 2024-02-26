@@ -48,7 +48,7 @@ def getUniquifier(pattern, type=None, region=None, year=None, monthName=None):
 	version += 1
 	return version
 
-def processActivityFromFile(filename, startInvoiceNumber=0):
+def processActivityFromFile(filename):
 	print(f'Processing activity from {filename}...')
 	invoiceSummary = []
 
@@ -77,9 +77,7 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 
 	locationInfo = activity.locationsByCLIN()
 
-	# print('Location info: ', locationInfo)
-
-	invoiceNumberValue = startInvoiceNumber
+	invoiceNumberValue = config.data['nextInvoiceNumber']
 
 	for clin in locationInfo.keys():
 		region = Regions[clin]
@@ -114,7 +112,6 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 
 				summary.to_excel(writer, sheet_name=sheetName, startrow=summaryStartRow, startcol=0, header=False)
 
-				# invoiceNumber = laborInvoiceNumber + CountryCodes[location]
 				invoiceNumber = f'SD-{invoiceNumberValue:04d}'
 				invoiceNumberValue += 1
 				invoiceAmount = data['Amount'].sum()
@@ -325,6 +322,9 @@ def processActivityFromFile(filename, startInvoiceNumber=0):
 		formatDetailTab(worksheet)
 		workbook.save(outputFile)
 	
+	print('updating nextInvoiceNumber in config...')
+	config.setNextInvoiceNumber(invoiceNumberValue)
+
 	return invoiceSummary
 
 def showResult(resultDictionary):
@@ -335,8 +335,6 @@ def showResult(resultDictionary):
 if __name__ == '__main__':
 	import sys
 
-	startInvoiceNumber = 123
-
 	if len(sys.argv) < 2:
 		print(f'Usage: {sys.argv[0]} <billing activity file>')
 		sys.exit(1)
@@ -344,7 +342,7 @@ if __name__ == '__main__':
 	processed = []
 
 	for filename in sys.argv[1:]:
-		result = processActivityFromFile(filename, startInvoiceNumber=startInvoiceNumber)
+		result = processActivityFromFile(filename)
 		
 		showResult(result)
 
@@ -391,4 +389,3 @@ if __name__ == '__main__':
 	worksheet = workbook['Summary']
 	formatSummaryTab(worksheet)
 	workbook.save(outputFile)
-	
