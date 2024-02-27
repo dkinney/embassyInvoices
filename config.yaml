@@ -219,7 +219,7 @@ laborHeaders:
   rate: Rate
   total: Amount
   type: Name
-nextInvoiceNumber: 19
+nextInvoiceNumber: 28
 paymentTerms:
   line1: Net 30
   line2: 'Late Payment Fee: 1.5% per month'

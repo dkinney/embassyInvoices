@@ -4,25 +4,58 @@ import pandas as pd
 from EmployeeTime import EmployeeTime
 from BillingRates import BillingRates
 
-class LaborDetail:
-	def __init__ (self, identifier:str, description:str, name:str, hours:float, rate:float, amount:float):
-		self.identifier = identifier
-		self.description = description
-		self.name = name
-		self.hours = hours
-		self.rate = rate
-		self.amount = amount
+# TERMINOLOGY:
+# CLIN: The identifier for the region (e.g. "CLIN 001")
+# Location: A country location within a region (e.g. "Russia")
+# City: The city of the embassy where the work is performed (e.g. "Moscow")
 
-class PostDetail:
-	def __init__ (self, identifier:str, name:str, hours:float, hourlyRate:float, wages:float, city:str, rate:float, amount:float):
-		self.identifier = identifier
-		self.name = name
-		self.hours = hours
-		self.hourlyRate = hourlyRate
-		self.wages = wages
-		self.city = city
-		self.rate = rate
-		self.amount = amount
+# class LaborDetail:
+# 	def __init__ (self, identifier:str, description:str, name:str, hours:float, rate:float, amount:float):
+# 		self.identifier = identifier
+# 		self.description = description
+# 		self.name = name
+# 		self.hours = hours
+# 		self.rate = rate
+# 		self.amount = amount
+
+# class PostDetail:
+# 	def __init__ (self, identifier:str, name:str, hours:float, hourlyRate:float, wages:float, city:str, rate:float, amount:float):
+# 		self.identifier = identifier
+# 		self.name = name
+# 		self.hours = hours
+# 		self.hourlyRate = hourlyRate
+# 		self.wages = wages
+# 		self.city = city
+# 		self.rate = rate
+# 		self.amount = amount
+
+# class HoursSummary:
+# 	def __init__ (self, city:str, identifier:str, name:str, regular:float, localHoliday:float, admin:float, overtime:float, onCallOT:float, scheduledOT:float, unscheduledOT:float, subtotal: float):
+# 		self.city = city
+# 		self.identifier = identifier
+# 		self.name = name
+# 		self.regular = regular
+# 		self.localHoliday = localHoliday
+# 		self.admin = admin
+# 		self.overtime = overtime
+# 		self.onCallOT = onCallOT
+# 		self.scheduledOT = scheduledOT
+# 		self.unscheduledOT = unscheduledOT
+# 		self.subtotal = subtotal
+
+# class HoursDetail:
+# 	def __init__ (self, date:str, name:str, identifier:str, regular:float, localHoliday:float, admin:float, overtime:float, onCallOT:float, scheduledOT:float, unscheduledOT:float, subtotal: float):
+# 		self.date = date
+# 		self.name = name
+# 		self.identifier = identifier
+# 		self.regular = regular
+# 		self.localHoliday = localHoliday
+# 		self.admin = admin
+# 		self.overtime = overtime
+# 		self.onCallOT = onCallOT
+# 		self.scheduledOT = scheduledOT
+# 		self.unscheduledOT = unscheduledOT
+# 		self.subtotal = subtotal
 
 class LocationDetail:
 	def __init__(self, locationName:str):
@@ -30,18 +63,23 @@ class LocationDetail:
 		self.laborDetails = []
 		self.postDetails = []
 		self.hazardDetails = []
+		self.hoursSummary = []
+		self.hoursDetail = []
 
 	def addLaborDetails(self, dataframe: pd.DataFrame):
-		for index, row in dataframe.iterrows():
-			self.laborDetails.append(LaborDetail(row['SubCLIN'], row['Description'], row['EmployeeName'], row['Hours'], row['Rate'], row['Amount']))
+		self.laborDetails.append(dataframe)
 
 	def addPostDetails(self, dataframe: pd.DataFrame):
-		for index, row in dataframe.iterrows():
-			self.postDetails.append(PostDetail(row['CLIN'], row['Name'], row['Regular'], row['Rate'], row['Regular Wages'], row['City'], row['Post Rate'], row['Post']))
-	
+		self.postDetails.append(dataframe)
+
 	def addHazardDetails(self, dataframe: pd.DataFrame):
-		for index, row in dataframe.iterrows():
-			self.hazardDetails.append(PostDetail(row['CLIN'], row['Name'], row['Regular'], row['Rate'], row['Regular Wages'], row['City'], row['Hazard Rate'], row['Hazard']))
+		self.hazardDetails.append(dataframe)
+
+	def addHoursSummary(self, dataframe: pd.DataFrame):
+		self.hoursSummary.append(dataframe)
+	
+	def addHoursDetail(self, dataframe: pd.DataFrame):
+		self.hoursDetail.append(dataframe)	
 
 class InvoiceData:
 	def __init__(self, clin:str):
@@ -71,6 +109,16 @@ class InvoiceData:
 		location.addHazardDetails(dataframe)
 		self.locationDetails[locationName] = location
 
+	def addHoursSummary(self, locationName: str, dataframe: pd.DataFrame):
+		location = self.retrieveLocation(locationName)
+		location.addHoursSummary(dataframe)
+		self.locationDetails[locationName] = location
+
+	def addHoursDetail(self, locationName: str, dataframe: pd.DataFrame):
+		location = self.retrieveLocation(locationName)
+		location.addHoursDetail(dataframe)
+		self.locationDetails[locationName] = location
+
 class LaborData:
 	def __init__(self, activity: EmployeeTime):
 		# create the data for creating labor invoices
@@ -90,12 +138,18 @@ class LaborData:
 				invoiceData = self.invoiceData[clin]
 
 			for location in locationInfo[clin]:
+				##########################################################################
+				# Data for labor invoices
+				##########################################################################
 				laborData = activity.groupedForInvoicing(clin=clin, location=location)
 
 				for subCLIN in laborData['SubCLIN'].unique():
 					clinData = laborData[laborData['SubCLIN'] == subCLIN]
 					invoiceData.addLaborDetail(location, clinData)
 
+				##########################################################################
+				# Data for post invoices
+				##########################################################################
 				postData = activity.groupedForPostReport(clin=clin, location=location)
 
 				# note: the "CLIN" column in postData is actually the subCLIN
@@ -103,12 +157,24 @@ class LaborData:
 					clinData = postData[postData['CLIN'] == subCLIN]
 					invoiceData.addPostDetail(location, clinData)
 
+				##########################################################################
+				# Data for hazard invoices
+				##########################################################################
 				hazardData = activity.groupedForHazardReport(clin=clin, location=location)
 
 				# note: the "CLIN" column in postData is actually the subCLIN
 				for subCLIN in hazardData['CLIN'].unique():
 					clinData = hazardData[hazardData['CLIN'] == subCLIN]
 					invoiceData.addHazardDetail(location, clinData)
+
+				##########################################################################
+				# Detail for hours report
+				##########################################################################
+				hoursSummary = activity.groupedForHoursReport(clin=clin, location=location)
+				invoiceData.addHoursSummary(location, hoursSummary)
+
+				hoursDetails = activity.byDate(clin=clin, location=location)
+				invoiceData.addHoursDetail(location, hoursDetails)
 
 			self.invoiceData[clin] = invoiceData
 
@@ -135,8 +201,27 @@ if __name__ == '__main__':
 		print(f'CLIN: {clin}')
 
 		for locationName in sorted(invoiceData.locationDetails.keys()):
-			locationDetails = invoiceData.locationDetails[locationName]
-			print(f'  Location {locationName} ({len(locationDetails.laborDetails)})')
-			print(f'  Post {locationName} ({len(locationDetails.postDetails)})')
-			print(f'  Hazard {locationName} ({len(locationDetails.hazardDetails)})')
+			locationData = invoiceData.locationDetails[locationName]
+
+			print(f'\nLabor Details: {len(locationData.laborDetails)}')
+			for item in locationData.laborDetails:
+				print(item)
+			
+			print(f'\nPost Details: {len(locationData.postDetails)}')
+			for item in locationData.postDetails:
+				print(item)
+
+			if len(locationData.hazardDetails) > 0:
+				print(f'\nHazard Details: {len(locationData.hazardDetails)}')
+				for item in locationData.hazardDetails:
+					print(item)
+
+			print(f'\nHours Summary: {len(locationData.hoursSummary)}')
+			for item in locationData.hoursSummary:
+				print(item)
+			
+			print(f'\nHours Detail: {len(locationData.hoursDetail)}')
+			for item in locationData.hoursDetail:
+				print(item)
+
 			print(f' ')
