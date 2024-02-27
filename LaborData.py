@@ -61,19 +61,24 @@ class LocationDetail:
 	def __init__(self, locationName:str):
 		self.locationName = locationName
 		self.laborDetails = []
-		self.postDetails = []
-		self.hazardDetails = []
+		self.laborHours = 0
+		self.laborAmount = 0
+
 		self.hoursSummary = []
 		self.hoursDetail = []
 
 	def addLaborDetails(self, dataframe: pd.DataFrame):
 		self.laborDetails.append(dataframe)
+		self.laborHours += dataframe['Hours'].sum()
+		self.laborAmount += dataframe['Amount'].sum()
 
-	def addPostDetails(self, dataframe: pd.DataFrame):
-		self.postDetails.append(dataframe)
+	# def addPostDetails(self, dataframe: pd.DataFrame):
+	# 	self.postDetails.append(dataframe)
+	# 	self.postAmount += dataframe['Post'].sum()
 
-	def addHazardDetails(self, dataframe: pd.DataFrame):
-		self.hazardDetails.append(dataframe)
+	# def addHazardDetails(self, dataframe: pd.DataFrame):
+	# 	self.hazardDetails.append(dataframe)
+	# 	self.hazardAmount += dataframe['Hazard'].sum()
 
 	def addHoursSummary(self, dataframe: pd.DataFrame):
 		self.hoursSummary.append(dataframe)
@@ -85,6 +90,11 @@ class InvoiceData:
 	def __init__(self, clin:str):
 		self.clin = clin
 		self.locationDetails = {}
+		self.hours = 0
+		self.amount = 0
+
+		self.postDetails: pd.DataFrame = None
+		self.hazardDetails: pd.DataFrame = None
 
 	def retrieveLocation(self, locationName:str) -> LocationDetail:
 		try:
@@ -99,15 +109,11 @@ class InvoiceData:
 		location.addLaborDetails(dataframe)
 		self.locationDetails[locationName] = location
 
-	def addPostDetail(self, locationName: str, dataframe: pd.DataFrame):
-		location = self.retrieveLocation(locationName)
-		location.addPostDetails(dataframe)
-		self.locationDetails[locationName] = location
+	def addPostDetail(self, dataframe: pd.DataFrame):
+		self.postDetails = dataframe
 	
-	def addHazardDetail(self, locationName: str, dataframe: pd.DataFrame):
-		location = self.retrieveLocation(locationName)
-		location.addHazardDetails(dataframe)
-		self.locationDetails[locationName] = location
+	def addHazardDetail(self, dataframe: pd.DataFrame):
+		self.hazardDetails = dataframe
 
 	def addHoursSummary(self, locationName: str, dataframe: pd.DataFrame):
 		location = self.retrieveLocation(locationName)
@@ -148,26 +154,6 @@ class LaborData:
 					invoiceData.addLaborDetail(location, clinData)
 
 				##########################################################################
-				# Data for post invoices
-				##########################################################################
-				postData = activity.groupedForPostReport(clin=clin, location=location)
-
-				# note: the "CLIN" column in postData is actually the subCLIN
-				for subCLIN in postData['CLIN'].unique():
-					clinData = postData[postData['CLIN'] == subCLIN]
-					invoiceData.addPostDetail(location, clinData)
-
-				##########################################################################
-				# Data for hazard invoices
-				##########################################################################
-				hazardData = activity.groupedForHazardReport(clin=clin, location=location)
-
-				# note: the "CLIN" column in postData is actually the subCLIN
-				for subCLIN in hazardData['CLIN'].unique():
-					clinData = hazardData[hazardData['CLIN'] == subCLIN]
-					invoiceData.addHazardDetail(location, clinData)
-
-				##########################################################################
 				# Detail for hours report
 				##########################################################################
 				hoursSummary = activity.groupedForHoursReport(clin=clin, location=location)
@@ -175,6 +161,15 @@ class LaborData:
 
 				hoursDetails = activity.byDate(clin=clin, location=location)
 				invoiceData.addHoursDetail(location, hoursDetails)
+
+			##########################################################################
+			# Data for post invoices
+			##########################################################################
+			postData = activity.groupedForPostReport(clin=clin)
+			invoiceData.addPostDetail(postData)
+
+			hazardData = activity.groupedForHazardReport(clin=clin)
+			invoiceData.addHazardDetail(hazardData)
 
 			self.invoiceData[clin] = invoiceData
 
@@ -206,22 +201,35 @@ if __name__ == '__main__':
 			print(f'\nLabor Details: {len(locationData.laborDetails)}')
 			for item in locationData.laborDetails:
 				print(item)
+				summary = item.groupby(['SubCLIN']).agg({'Hours': 'sum', 'Amount': 'sum'}).reset_index()
+				print(summary)
+				print('---')
 			
-			print(f'\nPost Details: {len(locationData.postDetails)}')
-			for item in locationData.postDetails:
-				print(item)
+			print(f'Total Labor Hours for {locationName}: {locationData.laborHours}')
+			print(f'Total Labor Amount for {locationName}: {locationData.laborAmount}')
 
-			if len(locationData.hazardDetails) > 0:
-				print(f'\nHazard Details: {len(locationData.hazardDetails)}')
-				for item in locationData.hazardDetails:
-					print(item)
-
-			print(f'\nHours Summary: {len(locationData.hoursSummary)}')
+			print('\n-------------------------')
+			print(f'Hours Summary: {locationName}')
 			for item in locationData.hoursSummary:
 				print(item)
-			
-			print(f'\nHours Detail: {len(locationData.hoursDetail)}')
+				print('---')
+
+			print('\n-------------------------')
+			print(f'Hours Detail: {locationName}')
 			for item in locationData.hoursDetail:
 				print(item)
+				print('---')
 
-			print(f' ')
+		print('\n-------------------------')
+		print(f'Post Details for {clin}: {len(invoiceData.postDetails)}')
+		print(invoiceData.postDetails)
+		summary = invoiceData.postDetails.groupby(['City']).agg({'Post': 'sum'}).reset_index()
+		print(summary)
+		print('---')
+
+		print('\n-------------------------')
+		print(f'Hazard Details for {clin}: {len(invoiceData.hazardDetails)}')
+		print(invoiceData.hazardDetails)
+		summary = invoiceData.hazardDetails.groupby(['City']).agg({'Hazard': 'sum'}).reset_index()
+		print(summary)
+		print('---')
