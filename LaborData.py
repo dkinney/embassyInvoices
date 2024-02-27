@@ -1,5 +1,7 @@
 #!/usr/local/bin/python
 import pandas as pd
+import re
+import glob
 
 from EmployeeTime import EmployeeTime
 from BillingRates import BillingRates
@@ -9,53 +11,30 @@ from BillingRates import BillingRates
 # Location: A country location within a region (e.g. "Russia")
 # City: The city of the embassy where the work is performed (e.g. "Moscow")
 
-# class LaborDetail:
-# 	def __init__ (self, identifier:str, description:str, name:str, hours:float, rate:float, amount:float):
-# 		self.identifier = identifier
-# 		self.description = description
-# 		self.name = name
-# 		self.hours = hours
-# 		self.rate = rate
-# 		self.amount = amount
+def getUniquifier(pattern, type=None, region=None, year=None, monthName=None):
+	# look for previous instances of the status file
+	patternValues = re.findall(r'(.*)-(.*)-(.*)-(.*)', pattern)
+	patternType = patternValues[0][0]
+	patterRegion = patternValues[0][1]
+	patternYear = patternValues[0][2]
+	patternMonthhName = patternValues[0][3]
 
-# class PostDetail:
-# 	def __init__ (self, identifier:str, name:str, hours:float, hourlyRate:float, wages:float, city:str, rate:float, amount:float):
-# 		self.identifier = identifier
-# 		self.name = name
-# 		self.hours = hours
-# 		self.hourlyRate = hourlyRate
-# 		self.wages = wages
-# 		self.city = city
-# 		self.rate = rate
-# 		self.amount = amount
+	statusFiles = glob.glob(pattern + '*.xlsx')
 
-# class HoursSummary:
-# 	def __init__ (self, city:str, identifier:str, name:str, regular:float, localHoliday:float, admin:float, overtime:float, onCallOT:float, scheduledOT:float, unscheduledOT:float, subtotal: float):
-# 		self.city = city
-# 		self.identifier = identifier
-# 		self.name = name
-# 		self.regular = regular
-# 		self.localHoliday = localHoliday
-# 		self.admin = admin
-# 		self.overtime = overtime
-# 		self.onCallOT = onCallOT
-# 		self.scheduledOT = scheduledOT
-# 		self.unscheduledOT = unscheduledOT
-# 		self.subtotal = subtotal
+	version = 0
+	for file in statusFiles:
+		for vals in re.findall(r'(.*)-(.*)-(.*)-(.*)-(\d+)', file):
+			typeMatches = type is None or type is not None and vals[0] == type
+			regionMatches = region is None or region is not None and vals[1] == region
+			yearMatches = year is None or year is not None and vals[2] == year
+			monthMatches = monthName is None or monthName is not None and vals[3] == monthName
 
-# class HoursDetail:
-# 	def __init__ (self, date:str, name:str, identifier:str, regular:float, localHoliday:float, admin:float, overtime:float, onCallOT:float, scheduledOT:float, unscheduledOT:float, subtotal: float):
-# 		self.date = date
-# 		self.name = name
-# 		self.identifier = identifier
-# 		self.regular = regular
-# 		self.localHoliday = localHoliday
-# 		self.admin = admin
-# 		self.overtime = overtime
-# 		self.onCallOT = onCallOT
-# 		self.scheduledOT = scheduledOT
-# 		self.unscheduledOT = unscheduledOT
-# 		self.subtotal = subtotal
+			if typeMatches and regionMatches and yearMatches and monthMatches:
+				thisVersion = int(vals[len(vals)-1])
+				version = max(version, thisVersion)
+
+	version += 1
+	return version
 
 class LocationDetail:
 	def __init__(self, locationName:str):
