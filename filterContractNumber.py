@@ -26,7 +26,7 @@ def formatName(text):
 
 	return f'{lastName}, {firstName}'
 
-def outputByRegion(data: pd.DataFrame):
+def outputNotApprovedByRegion(data: pd.DataFrame):
     for region in data['Region'].unique():
         with open(f'{region}-notApproved.tsv', 'w') as f:
             regionData = data.loc[data['Region'] == region].copy()
@@ -36,7 +36,7 @@ def outputByRegion(data: pd.DataFrame):
             for name in sorted(regionData['Employee Name'].unique()):
                 dataForOutput = regionData.loc[regionData['Employee Name'] == name].drop(columns=['Employee Name'])
                 f.write(f'\n{name}\tSubtotal\t{regionData.loc[regionData["Employee Name"] == name, "Duration"].sum()}\n')
-                f.write(dataForOutput.to_csv(index=False, header=False, sep='\t'))
+                f.write(dataForOutput.to_csv(index=False, header=False, sep='\t'))    
 
 # Read a contract number from argv[1] and filter the data in argv[2] for that contract number
 if len(sys.argv) < 3:
@@ -45,7 +45,7 @@ if len(sys.argv) < 3:
 
 contractNumber = sys.argv[1]
 filename = sys.argv[2]
-
+outputFilenamePrefix = filename.split('.csv')[0]
 data = pd.read_csv(filename, encoding='latin1')
 
 # filter the data for the contract number
@@ -55,23 +55,39 @@ if data.empty:
     print(f"No data found for contract number {contractNumber}")
     sys.exit(1)
 
+# ensure the 'Entry Date" is an actual date
+data['Entry Date'] = pd.to_datetime(data['Entry Date'], errors='coerce')
+
 # fix up the employee name
 data['Employee Name'] = data['Employee Name'].apply(formatName)
 
 # trim the first character from the Employee ID
 data['Employee ID'] = data['Employee ID'].str[1:]
 
-# add some columns to the filtered data from the 'Project Name' column
+# contract ID is the first 13 characters of the project name
+data['Contract ID'] = data['Project Name'].str[:13]
+
+# the region name is the 3rd token of the project name
 try:
-    data['Contract ID'] = data['Project Name'].str.split().str[0]
     data['Region'] = data['Project Name'].str.split().str[2]
 except Exception as e:
     print(f"Error: {e}")
     # this is not fatal, so we can continue
     pass
 
-data.sort_values(by=['Entry Date', 'Region', 'Employee Name', 'State'], inplace=True)
-grouped = data.groupby(['Region', 'Entry Date', 'Employee Name', 'State']).agg({'Duration': 'sum'}).reset_index()
-notApproved = grouped.loc[grouped['State'] != 'Approved']
+data.sort_values(by=['Contract ID', 'Region', 'Entry Date', 'Employee Name', 'State'], inplace=True)
+data = data[['Contract ID', 'Region', 'Entry Date', 'Employee Name', 'Employee ID', 'Task Name', 'Duration', 'State']]
 
-outputByRegion(notApproved)
+print(data.to_string(index=False))
+data.to_csv(f'{outputFilenamePrefix}-filtered.csv', index=False)
+
+exit()
+
+for region in data['Region'].unique():
+    outputFilename = f'{outputFilenamePrefix}-{region}.csv'
+    regionData = data.loc[data['Region'] == region].copy()
+    regionData.drop(columns=['Region'], inplace=True)
+    regionData.sort_values(by=['Entry Date', 'Employee Name', 'State'], inplace=True)
+    # regionData.to_csv(outputFilename, index=False)
+    print(regionData)
+    print(outputFilename)

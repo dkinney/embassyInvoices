@@ -581,8 +581,6 @@ if __name__ == '__main__':
 	time.joinWith(employees)
 
 	print(f'\nActivity from {time.dateStart} to {time.dateEnd}')
-
-	data = time.groupedForInvoicing(clin='002', location='NATO')
 	now = pd.Timestamp.now().strftime("%m%d%H%M")
 
 	timeByDate = time.byDate()
