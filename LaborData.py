@@ -4,6 +4,7 @@ import re
 import glob
 
 from EmployeeTime import EmployeeTime
+from EmployeeInfo import EmployeeInfo
 from BillingRates import BillingRates
 
 # TERMINOLOGY:
@@ -161,12 +162,20 @@ if __name__ == '__main__':
 
 	filename = sys.argv[1]
 
-	activity = EmployeeTime(filename, verbose=False)
-	effectiveDate = activity.dateEnd
+	time = EmployeeTime(filename, verbose=False)
+	effectiveDate = time.dateEnd
 	billingRates = BillingRates(effectiveDate=effectiveDate, verbose=False)
-	activity.joinWith(billingRates)
 
-	labor = LaborData(activity)
+	employees = EmployeeInfo(verbose=False)
+	employees.joinWith(billingRates)
+	time.joinWith(employees)
+
+	# activity = EmployeeTime(filename, verbose=False)
+	# effectiveDate = activity.dateEnd
+	# billingRates = BillingRates(effectiveDate=effectiveDate, verbose=False)
+	# activity.joinWith(billingRates)
+
+	labor = LaborData(time)
 
 	print(f'\nTesting data structures:')
 

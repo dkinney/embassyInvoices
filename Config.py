@@ -7,6 +7,10 @@ class Config:
         self.data = config
         self.filename = inputFilename # for updating later
 
+        # load styles from a separate file
+        styles = yaml.safe_load(open('dataStyles.yaml'))
+        self.data['dataStyles'] = styles
+
     # general set method
     def set(self, key, value):
         self.data[key] = value
@@ -29,4 +33,5 @@ if __name__ == '__main__':
     config = Config(filename=inputFilename)
     print(config.data)
 
+    print(f'\n{config.data["dataStyles"]}')
     print(config.data['address']['line1'])

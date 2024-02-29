@@ -4,6 +4,7 @@ from openpyxl import load_workbook
 
 from Config import Config
 from EmployeeTime import EmployeeTime
+from EmployeeInfo import EmployeeInfo
 from BillingRates import BillingRates
 from LaborData import LaborData
 from LaborData import getUniquifier
@@ -45,16 +46,27 @@ if __name__ == '__main__':
 
 	filename = sys.argv[1]
 
-	activity = EmployeeTime(filename, verbose=False)
-	effectiveDate = activity.dateEnd
+	time = EmployeeTime(filename, verbose=False)
+	effectiveDate = time.dateEnd
 	billingRates = BillingRates(effectiveDate=effectiveDate, verbose=False)
-	activity.joinWith(billingRates)
 
-	labor = LaborData(activity)
+	employees = EmployeeInfo(verbose=False)
+	employees.joinWith(billingRates)
+	time.joinWith(employees)
 
-	startYear = activity.startYear()
-	startMonth = activity.startMonthName()
-	locationInfo = activity.locationsByCLIN()
+	employeesIncomplete = employees.data[employees.data['SubCLIN'].isna()]
+
+	if len(employeesIncomplete) > 0:
+		print(f'\n\n----------')
+		print(f'Employees without rates: {len(employeesIncomplete)}')
+		print(employeesIncomplete[['EmployeeName', 'EmployeeID']])
+		print('----------\n')
+
+	labor = LaborData(time)
+
+	startYear = time.startYear()
+	startMonth = time.startMonthName()
+	locationInfo = time.locationsByCLIN()
 	invoiceNumberValue = config.data['nextInvoiceNumber']
 
 	for clin in locationInfo.keys():
@@ -70,6 +82,10 @@ if __name__ == '__main__':
 
 		with pd.ExcelWriter(outputFile) as writer:
 			for locationName in sorted(invoiceData.locationDetails.keys()):
+				if locationName not in locationInfo[clin] or locationName == 'Unknown':
+					print(f'\n----------\nWarning: {locationName} is not in the locationInfo dictionary\n----------\n')
+					continue
+
 				locationData = invoiceData.locationDetails[locationName]
 				sheetName = f'Labor-{locationName}'
 				summaryStartRow = 22
@@ -85,10 +101,10 @@ if __name__ == '__main__':
 
 				invoiceNumber = f'SD-{invoiceNumberValue:04d}'
 				invoiceNumberValue += 1
-				billingPeriod = activity.billingPeriod()
+				billingPeriod = time.billingPeriod()
 
 				invoiceDetail = {
-					'description': f'{activity.dateStart.strftime("%B")} {startYear}',
+					'description': f'{time.dateStart.strftime("%B")} {startYear}',
 					'region': locationName,
 					'filename': outputFile,
 					'type': 'Labor',

@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from xml.sax import ContentHandler, parse
 
+from EmployeeInfo import EmployeeInfo
 from BillingRates import BillingRates
 
 from openpyxl import load_workbook
@@ -21,6 +22,7 @@ config = Config()
 contractNumber = config.data['contractNumber']
 baseYear = config.data['baseYear']
 upchargeRate = config.data['upchargeRate']
+clins = config.data['regions']
 
 TaskNames = {
 	'3322': 'Regular',
@@ -85,7 +87,7 @@ def formatName(text):
 	if middleInitial != '':
 		return f'{lastName}, {firstName} {middleInitial}'
 
-	return f'{lastName}, {firstName} {middleInitial}'
+	return f'{lastName}, {firstName}'
 
 def cleanupTask(text):
 	if text in TaskMap:
@@ -94,10 +96,20 @@ def cleanupTask(text):
 	return text
 	
 class EmployeeTime:
+	def __init__(self, data:pd.DataFrame, verbose=False):
+		expectedColumns = ['EmployeeName', 'EmployeeID', 'Date', 'Description', 'TaskName', 'Hours', 'State']
+		receivedColumns = data.columns.tolist()
+
+		print('\n\n---------- EmployeeTime.__init__ ----------')
+		diff = list(set(expectedColumns) - set(receivedColumns))
+		print(diff)
+
+		self.data = data
+		self.dateStart = data['Date'].min()
+		self.dateEnd = data['Date'].max()
+
 	def __init__(self, filename=None, verbose=False):
 		self.data = None	# a dataframe containing the full billing information loaded from a file
-		self.asia = None
-		self.europe = None
 		self.dateStart = datetime(1970,1,1)	# start date of the billing period loaded from a file
 		self.dateEnd = datetime(3000,1,1)	# end date of the billing period loaded from a file
 
@@ -105,16 +117,14 @@ class EmployeeTime:
 			if verbose:
 				print(f'Parsing activity data from {filename}')
 			
-			converters = {
-				'EmployeeName': str,
-				'Date': datetime,
-				'Description': str,
-				'TaskName': str,
-				'Hours': float
-			}
-		
-			df = pd.read_excel(filename, header=5, converters=converters)
-			df.columns = ['EmployeeName', 'Date', 'Description', 'TaskName', 'Hours', 'State']
+			# read from csv in latin1 encoding
+			df = pd.read_csv(filename, encoding='latin1')
+				
+			# df = pd.read_csv(filename, converters=converters)
+			df.columns = ['EmployeeName', 'EmployeeID', 'Date', 'Description', 'TaskName', 'Hours', 'State']
+
+			# strip first character to make it a number, but keep it as a string
+			df['EmployeeID'] = df['EmployeeID'].str[1:].astype(str)
 
 			# fill down the missing EmployeeName values
 			df['EmployeeName'] = df['EmployeeName'].fillna(method='ffill')
@@ -125,12 +135,17 @@ class EmployeeTime:
 			# we only care about the rows that start with our contract number in the Description
 			df = df.loc[df['Description'].str.startswith('19AQMM23C0047')]
 			df['Region'] = np.where(df['Description'].str.contains('Asia'), 'Asia', 'Europe')
+			df['CLIN'] = df['Region'].apply(lambda x: clins[x])
+
+			# assign a CLIN so that it can be reported
+			df['CLIN'].fillna('Unknown', inplace=True)
 
 			# strip whitespace from all string columns
 			df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
 			# clean up values 
 			df['EmployeeName'] = df['EmployeeName'].apply(formatName)
+
 			df['Hours'] = pd.to_numeric(df['Hours'], errors="coerce")
 			df['TaskName'] = df['TaskName'].apply(cleanupTask)
 			df['Date'] = pd.to_datetime(df['Date'], errors="coerce")
@@ -147,21 +162,26 @@ class EmployeeTime:
 
 			self.data = df
 			
-	def joinWith(self, billingRates: BillingRates):
-		if billingRates.data is None:
+	def joinWith(self, employeeInfo):
+		if employeeInfo.data is None:
 			# nothing to do
 			return
 
-		# Intacct data does not have an EmployeeID, so we need to join on the EmployeeName
-		# joined = self.data.join(billingRates.data.set_index('EmployeeID'), on='Number', how='left', rsuffix='_rates')
-		joined = self.data.join(billingRates.data.set_index('EmployeeName'), on='EmployeeName', how='left', rsuffix='_rates')
+		joined = self.data.join(employeeInfo.data.set_index('EmployeeID'), on='EmployeeID', how='left', rsuffix='_info')
 
+		unjoinedTime = joined.loc[joined['Location'].isna()]
+		if len(unjoinedTime) > 0:
+			print(f'{len(unjoinedTime)} records do not have a location:')
+			print(unjoinedTime)
+
+		joined['Location'] = joined['Location'].fillna('Unknown')
 		joined['Rate'] = np.where(joined['RateType'] == 'Overtime', joined['BillRateOT'], joined['BillRateReg'])
 		joined['Description'] = np.where(joined['RateType'] == 'Overtime', '(Overtime)', joined['Category'])
 		joined['SubCLIN'] = joined['SubCLIN'].str.replace('X', baseYear)
 
 		# reorder the columns to be more useful
 		joined = joined[['Date', 'CLIN', 'Region', 'Location', 'City', 'SubCLIN', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'State', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate']]
+
 		self.data = joined
 
 	def details(self, clin=None, location=None):
@@ -210,7 +230,7 @@ class EmployeeTime:
 		return pivot
 	
 	def isIn(self, employeeNumberList):
-		records = self.data.loc[(self.data['Number'].isin(employeeNumberList))]
+		records = self.data.loc[(self.data['EmployeeID'].isin(employeeNumberList))]
 		return records
 	
 	def startYear(self):
@@ -230,8 +250,11 @@ class EmployeeTime:
 		return billingPeriod
 	
 	def locationsByCLIN(self):
-		# DEBUG: filter out CLINs 001 and 002 to see what is left
-		# print(self.data.loc[~self.data['CLIN'].isin(['001', '002'])])
+		noLocation = self.data.loc[self.data['Location'].isna()]
+
+		if len(noLocation) > 0:
+			print(f'\n{len(noLocation)} records do not have a location:')
+			print(noLocation)
 
 		result = {}
 		for clin in self.data['CLIN'].unique():
@@ -246,13 +269,23 @@ class EmployeeTime:
 		return result
 	
 	def groupedForInvoicing(self, clin=None, location=None):
-		invoiceDetail = self.data
+		invoiceDetail = self.data.copy()
 
 		if clin is not None:
 			invoiceDetail = invoiceDetail.loc[invoiceDetail['CLIN'] == clin]
 
 		if location is not None:
 			invoiceDetail = invoiceDetail.loc[invoiceDetail['Location'] == location]
+
+		# NOTE: ONLY uses Approved hours
+		omittedDetails = invoiceDetail.loc[self.data['State'] != 'Approved']
+
+		if len(omittedDetails) > 0:
+			print(f'\nOmitted because of state for CLIN: {clin}, {location}: {len(omittedDetails)}')
+			omittedGrouped = omittedDetails.groupby(['State'], as_index=False).agg({'Hours': 'sum'})
+			print(omittedGrouped.to_string(index=False, header=False))
+
+		invoiceDetail = invoiceDetail.loc[invoiceDetail['State'] == 'Approved']
 
 		# debug - print the info for SubCLIN 0327
 		# print(invoiceDetail.loc[invoiceDetail['SubCLIN'] == '0327'])
@@ -535,23 +568,27 @@ def getUniquifier(pattern, type=None, region=None, year=None, monthName=None):
 	return version
 
 if __name__ == '__main__':
-	billingRates = BillingRates(verbose=False)
-
 	activityFilename = sys.argv[1] if len(sys.argv) > 1 else None
-
-	print(f'Parsing billing data from {activityFilename}')
 
 	if activityFilename is None:
 		print(f'Usage: {sys.argv[0]} <activity file>')
 		exit()
 
 	time = EmployeeTime(activityFilename, verbose=False)
-	time.joinWith(billingRates)
+	employees = EmployeeInfo(verbose=False)
+	billingRates = BillingRates(verbose=False)
+	employees.joinWith(billingRates)
+	time.joinWith(employees)
+
+	print(f'\nActivity from {time.dateStart} to {time.dateEnd}')
 
 	data = time.groupedForInvoicing(clin='002', location='NATO')
 	now = pd.Timestamp.now().strftime("%m%d%H%M")
 
 	timeByDate = time.byDate()
+
+	timeByDate.sort_values(['Date', 'EmployeeName'], ascending=[False, True], inplace=True)
+
 	timeByEmployee = time.byEmployee()
 
 	for region in ['Asia', 'Europe']:
@@ -566,8 +603,8 @@ if __name__ == '__main__':
 		regionFile = f'{pattern}-{uniquifier:02d}.xlsx'
 
 		with pd.ExcelWriter(regionFile) as writer:
-			regionDate.to_excel(writer, sheet_name='Date', startrow=0, startcol=0, header=True, index=False)
 			regionEmployee.to_excel(writer, sheet_name='Employee', startrow=0, startcol=0, header=True, index=False)
+			regionDate.to_excel(writer, sheet_name='Date', startrow=0, startcol=0, header=True, index=False)
 
 		workbook = load_workbook(regionFile)
 

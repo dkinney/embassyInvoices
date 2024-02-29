@@ -11,7 +11,6 @@ from InvoiceStyles import styles
 
 from Config import Config
 config = Config()
-
 contractNumber = config.data['contractNumber']
 dataStyles = config.data['dataStyles']
 
@@ -1068,9 +1067,9 @@ def formatTimeByEmployee(worksheet):
     styleColumn(worksheet, 'P', 'Hours')
 
     # create a table
-    table = Table(displayName=worksheet.title, ref="A2:O" + str(worksheet.max_row))
-    worksheet.add_table(table)
-    worksheet.freeze_panes = worksheet['A3']
+    # table = Table(displayName=worksheet.title, ref="A2:O" + str(worksheet.max_row))
+    # worksheet.add_table(table)
+    # worksheet.freeze_panes = worksheet['A3']
 
     # add SUM() formulas
     start = 3
