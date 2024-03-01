@@ -6,6 +6,7 @@ from Config import Config
 from EmployeeTime import EmployeeTime
 from EmployeeInfo import EmployeeInfo
 from BillingRates import BillingRates
+from Allowances import Allowances
 from LaborData import LaborData
 from LaborData import getUniquifier
 
@@ -49,6 +50,8 @@ if __name__ == '__main__':
 	time = EmployeeTime(filename, verbose=False)
 	effectiveDate = time.dateEnd
 	billingRates = BillingRates(effectiveDate=effectiveDate, verbose=False)
+	allowances = Allowances()
+	billingRates.joinWith(allowances)
 
 	employees = EmployeeInfo(verbose=False)
 	employees.joinWith(billingRates)

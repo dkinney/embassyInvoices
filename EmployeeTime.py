@@ -176,12 +176,7 @@ class EmployeeTime:
 		joined['Rate'] = np.where(joined['RateType'] == 'Overtime', joined['BillRateOT'], joined['BillRateReg'])
 		joined['Description'] = np.where(joined['RateType'] == 'Overtime', '(Overtime)', joined['Category'])
 		joined['RoleID'] = joined['RoleID'].str.replace('X', baseYear)
-
-		print('JOINED')
-		print(joined)
-		print(joined.info())
-
-
+		
 		# reorder the columns to be more useful
 		joined = joined[['Date', 'CLIN', 'Region', 'Country', 'PostName', 'RoleID', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'State', 'Rate', 'HourlyRate', 'PostingRate', 'HazardRate']]
 
