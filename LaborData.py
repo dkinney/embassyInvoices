@@ -129,8 +129,8 @@ class LaborData:
 				##########################################################################
 				laborData = activity.groupedForInvoicing(clin=clin, location=location)
 
-				for subCLIN in laborData['SubCLIN'].unique():
-					clinData = laborData[laborData['SubCLIN'] == subCLIN]
+				for role in laborData['RoleID'].unique():
+					clinData = laborData[laborData['RoleID'] == role]
 					invoiceData.addLaborDetail(location, clinData)
 
 				##########################################################################
@@ -189,7 +189,7 @@ if __name__ == '__main__':
 			print(f'\nLabor Details: {len(locationData.laborDetails)}')
 			for item in locationData.laborDetails:
 				print(item)
-				summary = item.groupby(['SubCLIN']).agg({'Hours': 'sum', 'Amount': 'sum'}).reset_index()
+				summary = item.groupby(['RoleID']).agg({'Hours': 'sum', 'Amount': 'sum'}).reset_index()
 				print(summary)
 				print('---')
 			
@@ -211,13 +211,13 @@ if __name__ == '__main__':
 		print('\n-------------------------')
 		print(f'Post Details for {clin}: {len(invoiceData.postDetails)}')
 		print(invoiceData.postDetails)
-		summary = invoiceData.postDetails.groupby(['City']).agg({'Post': 'sum'}).reset_index()
+		summary = invoiceData.postDetails.groupby(['PostName']).agg({'Post': 'sum'}).reset_index()
 		print(summary)
 		print('---')
 
 		print('\n-------------------------')
 		print(f'Hazard Details for {clin}: {len(invoiceData.hazardDetails)}')
 		print(invoiceData.hazardDetails)
-		summary = invoiceData.hazardDetails.groupby(['City']).agg({'Hazard': 'sum'}).reset_index()
+		summary = invoiceData.hazardDetails.groupby(['PostName']).agg({'Hazard': 'sum'}).reset_index()
 		print(summary)
 		print('---')

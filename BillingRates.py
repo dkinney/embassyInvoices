@@ -4,7 +4,7 @@ from InvoiceStyles import styles
 from InvoiceFormat import formatEmployeeInfo
 
 from EmployeeInfo import EmployeeInfo
-from PostHazard import PostHazard
+from Allowances import Allowances
 
 Regions = {
 	'001': 'Asia',
@@ -25,16 +25,20 @@ class BillingRates:
 		# Define the data type will be used when reading in the data
 		# By default, it will try to make columns that only have numbers into numbers.
 		converters = {
+			'RoleID': str,
 			'CLIN': str,
-			'SubClin': str,
-			'SubCLIN': str,
+			'Country': str,
+			'PostName': str,
 			'Category': str,
-			'Location': str,
+			'EffectiveDate': str,
 			'BillRateReg': float,
 			'BillRateOT': float
 		}
 	
 		df = pd.read_excel(ratesFilename, header=0, converters=converters)
+
+		# make 'EffectiveDate' a datetime object
+		df['EffectiveDate'] = pd.to_datetime(df['EffectiveDate'])
 
 		# Set BillRateReg and BillRateOT values to zero if they are NaN
 		df['BillRateReg'].fillna(0, inplace=True)
@@ -42,13 +46,17 @@ class BillingRates:
 
 		# strip whitespace from all string columns
 		df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-		df = df.groupby('SubCLIN').apply(lambda x: x.loc[x['EffectiveDate'] <= self.effectiveDate].sort_values(by='EffectiveDate', ascending=True).head(1)).reset_index(drop=True)
+		df = df.groupby('RoleID').apply(lambda x: x.loc[x['EffectiveDate'] <= self.effectiveDate].sort_values(by='EffectiveDate', ascending=True).head(1)).reset_index(drop=True)
 
 		if verbose:
 			print(f'Loaded {len(df)} labor rates from {ratesFilename}')
 			print(df)
 
 		self.data = df
+
+	def joinWith(self, allowances: Allowances):
+		# join the billing rates with the hazard pay rates
+		self.data = pd.merge(self.data, allowances.data, how='left', on='PostName')
 
 if __name__ == '__main__':
 	import sys
@@ -59,3 +67,4 @@ if __name__ == '__main__':
 	# effectiveDate = pd.to_datetime(date)
 	billingRates = BillingRates(effectiveDate=date, verbose=False)
 	print(billingRates.data)
+	# print(billingRates.data.info())

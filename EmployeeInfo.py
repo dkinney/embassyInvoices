@@ -9,30 +9,41 @@ class EmployeeInfo:
 		# Define the data type will be used when reading in the data
 		# By default, it will try to make columns that only have numbers into numbers.
 		converters = {
-			'EmployeeName': str,
-			'EmployeeID': str,
-			'HourlyRateReg': float,
-			'HourlyRateOT': float,
-			'Location': str,
+			'Employee ID': str,
+			'Employee Name': str,
+			'Start Date': str,
+			'Seniority Date': str,
+			'Effective Date': str,
+			'HourlyRate': float,
+			'Role ID': str,
 			'Title': str,
-			'PostingRate': float,
-			'HazardRate': float
+			'Note': str
 		}
 	
 		df = pd.read_excel(filename, header=0, converters=converters)
+
+		# rename columns for internal usage
+		df.rename(columns={
+			'Employee ID': 'EmployeeID',
+			'Employee Name': 'EmployeeName',
+			'Start Date': 'StartDate',
+			'Seniority Date': 'SeniorityDate',
+			'Effective Date': 'EffectiveDate',
+			'Hourly Rate': 'HourlyRate',
+			'Role ID': 'RoleID'
+		}, inplace=True)
+
+		# strip whitespace from all string columns
 		df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
 		self.checkMissing(df)
 
-		# Ensure there are no duplicate rows
-		# TODO: Make this an error so that it can be highlighted to clean the input data.
-		df = df.drop_duplicates()
-
 		# drop any employee that does not have an EmployeeID
 		df = df.dropna(axis=0, how='any', subset=['EmployeeID'])
 
-		# strip whitespace from all string columns
-		df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+		# Ensure there are no duplicate rows
+		# TODO: group this according to 'Employee ID' and 'Effective Date'
+		df = df.drop_duplicates()
 
 		if verbose:
 			print(f'Loaded {len(df)} employees from {filename}')
@@ -42,10 +53,10 @@ class EmployeeInfo:
 
 	def checkMissing(self, df: pd.DataFrame):
 		self.missingNumber = df.loc[df['EmployeeName'].notna() & df['EmployeeID'].isna()]
-		self.missingSubCLIN = df.loc[df['EmployeeName'].notna()  & df['EmployeeID'].notna() & df['SubCLIN'].isna()]
+		self.missingRoleID = df.loc[df['EmployeeName'].notna()  & df['EmployeeID'].notna() & df['RoleID'].isna()]
 
 		employeeSet = set()
-		employeeSet.update(self.missingSubCLIN['EmployeeID'].tolist())
+		employeeSet.update(self.missingRoleID['EmployeeID'].tolist())
 		self.employeesMissingData = list(employeeSet)
 
 	def describeMissing(self):
@@ -53,16 +64,16 @@ class EmployeeInfo:
 			print(f"  Missing Number: {len(self.missingNumber)}")
 			print(self.missingNumber[['EmployeeName']])
 
-		if len(self.missingSubCLIN) > 0:
-			print(f"  Missing SubCLIN: {len(self.missingSubCLIN)}")
-			print(self.missingSubCLIN[['EmployeeName', 'EmployeeID']])
+		if len(self.missingRoleID) > 0:
+			print(f"  Missing RoleID: {len(self.missingRoleID)}")
+			print(self.missingRoleID[['EmployeeName', 'EmployeeID']])
 
 	def joinWith(self, billingRates):
 		if billingRates.data is None:
 			# nothing to do
 			return
 
-		joined = self.data.join(billingRates.data.set_index('SubCLIN'), on='SubCLIN', how='left', rsuffix='_rates')
+		joined = self.data.join(billingRates.data.set_index('RoleID'), on='RoleID', how='left', rsuffix='_rates')
 		self.data = joined
 
 # The following is only used when testing this module.
@@ -75,7 +86,7 @@ if __name__ == '__main__':
 	# By default, uses the file, "EmployeeInfo.xlsx" within the data directory
 	# unless a filename is provided as a command line argument.
 	inputFilename = sys.argv[1] if len(sys.argv) > 1 else None
-	employees = EmployeeInfo(inputFilename, verbose=False)
+	employees = EmployeeInfo(inputFilename, verbose=True)
 
 	# load PostHazard rates
 	# postHazard = pd.read_csv('data/PostHazardRates.csv')
@@ -89,9 +100,9 @@ if __name__ == '__main__':
 	billingRates = BillingRates(verbose=False)
 
 	employees.joinWith(billingRates)
-	debug = employees.data.loc[employees.data['EmployeeID'] == '11956']
+	debug = employees.data.loc[employees.data['EmployeeID'] == 'E11956']
 	print(debug)
-	print(debug[['EmployeeName', 'EmployeeID', 'City', 'PostingRate', 'HazardRate']])
+	print(debug[['EmployeeName', 'EmployeeID', 'PostName', 'PostingRate', 'HazardRate']])
 
 	# billingRates.joinWith(employees)
 
@@ -101,9 +112,9 @@ if __name__ == '__main__':
 	# # reordering the columns
 	# billingRates.data = billingRates.data[[
 	# 	'EmployeeName', 'EmployeeID', 'EffectiveDate',
-	# 	'Title', 'HourlyRateReg', 'HourlyRateOT', 
-	# 	'Location', 'City', 'PostingRate', 'HazardRate', 
-	# 	'CLIN', 'SubCLIN', 'Category', 'BillRateReg', 'BillRateOT'
+	# 	'Title', 'HourlyRate', 'HourlyRateOT', 
+	# 	'Country', 'PostName', 'PostingRate', 'HazardRate', 
+	# 	'CLIN', 'RoleID', 'Category', 'BillRateReg', 'BillRateOT'
 	# ]]
 
 	# outputFile = 'data/EmployeeInfo.csv'

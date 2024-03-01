@@ -61,9 +61,6 @@ data['Entry Date'] = pd.to_datetime(data['Entry Date'], errors='coerce')
 # fix up the employee name
 data['Employee Name'] = data['Employee Name'].apply(formatName)
 
-# trim the first character from the Employee ID
-data['Employee ID'] = data['Employee ID'].str[1:]
-
 # contract ID is the first 13 characters of the project name
 data['Contract ID'] = data['Project Name'].str[:13]
 

@@ -11,6 +11,7 @@ from xml.sax import ContentHandler, parse
 
 from EmployeeInfo import EmployeeInfo
 from BillingRates import BillingRates
+from Allowances import Allowances
 
 from openpyxl import load_workbook
 from InvoiceStyles import styles
@@ -123,9 +124,6 @@ class EmployeeTime:
 			# df = pd.read_csv(filename, converters=converters)
 			df.columns = ['EmployeeName', 'EmployeeID', 'Date', 'Description', 'TaskName', 'Hours', 'State']
 
-			# strip first character to make it a number, but keep it as a string
-			df['EmployeeID'] = df['EmployeeID'].str[1:].astype(str)
-
 			# fill down the missing EmployeeName values
 			df['EmployeeName'] = df['EmployeeName'].fillna(method='ffill')
 
@@ -169,18 +167,23 @@ class EmployeeTime:
 
 		joined = self.data.join(employeeInfo.data.set_index('EmployeeID'), on='EmployeeID', how='left', rsuffix='_info')
 
-		unjoinedTime = joined.loc[joined['Location'].isna()]
+		unjoinedTime = joined.loc[joined['Country'].isna()]
 		if len(unjoinedTime) > 0:
 			print(f'{len(unjoinedTime)} records do not have a location:')
 			print(unjoinedTime)
 
-		joined['Location'] = joined['Location'].fillna('Unknown')
+		joined['Country'] = joined['Country'].fillna('Unknown')
 		joined['Rate'] = np.where(joined['RateType'] == 'Overtime', joined['BillRateOT'], joined['BillRateReg'])
 		joined['Description'] = np.where(joined['RateType'] == 'Overtime', '(Overtime)', joined['Category'])
-		joined['SubCLIN'] = joined['SubCLIN'].str.replace('X', baseYear)
+		joined['RoleID'] = joined['RoleID'].str.replace('X', baseYear)
+
+		print('JOINED')
+		print(joined)
+		print(joined.info())
+
 
 		# reorder the columns to be more useful
-		joined = joined[['Date', 'CLIN', 'Region', 'Location', 'City', 'SubCLIN', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'State', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate']]
+		joined = joined[['Date', 'CLIN', 'Region', 'Country', 'PostName', 'RoleID', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'State', 'Rate', 'HourlyRate', 'PostingRate', 'HazardRate']]
 
 		self.data = joined
 
@@ -191,13 +194,13 @@ class EmployeeTime:
 			df = df.loc[df['CLIN'] == clin]
 
 		if location is not None:
-			df = df.loc[df['Location'] == location]
+			df = df.loc[df['Country'] == location]
 
-		grouped = df.groupby(['Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 'TaskName', 'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate'], as_index=False).agg({'Hours': 'sum'})
+		grouped = df.groupby(['Date', 'CLIN', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName', 'TaskName', 'Rate', 'HourlyRate', 'PostingRate', 'HazardRate'], as_index=False).agg({'Hours': 'sum'})
 
 		pivot = grouped.pivot_table(index=[
-			'Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 
-			'Rate', 'HourlyRateReg', 'PostingRate', 'HazardRate'
+			'Date', 'CLIN', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName', 
+			'Rate', 'HourlyRate', 'PostingRate', 'HazardRate'
 		], columns='TaskName', values='Hours').reset_index()
 
 		pivot.sort_values(['EmployeeName'], ascending=[True], inplace=True)
@@ -211,21 +214,21 @@ class EmployeeTime:
 		pivot['HoursReg'] = pivot['Regular'] + pivot['LocalHoliday'] + pivot['Admin']
 		pivot['HoursOT'] = pivot['Overtime'] + pivot['On-callOT'] + pivot['ScheduledOT'] + pivot['UnscheduledOT']
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
-		pivot['RegularWages'] = pivot['Regular'] * pivot['HourlyRateReg'] # only use "Regular" hours for posting, not OT nor other type of regular hours
+		pivot['RegularWages'] = pivot['Regular'] * pivot['HourlyRate'] # only use "Regular" hours for posting, not OT nor other type of regular hours
 		pivot['Posting'] = pivot['RegularWages'] * pivot['PostingRate']
 		pivot['Hazard'] = pivot['RegularWages'] * pivot['HazardRate']
 
 		pivot = pivot[[
-			'Date', 'CLIN', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName', 
+			'Date', 'CLIN', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName', 
 			'Regular', 'LocalHoliday', 'Holiday', 'Vacation', 'Admin', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
 			'HoursReg', 'HoursOT', 'HoursTotal',
-			'HourlyRateReg', 'RegularWages', 
+			'HourlyRate', 'RegularWages', 
 			'PostingRate', 'Posting', 
 			'HazardRate', 'Hazard'
 		]]
 
-		# pivot.sort_values(['Date', 'Location', 'City', 'SubCLIN', 'Category', 'EmployeeName'], inplace=True)
+		# pivot.sort_values(['Date', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName'], inplace=True)
 
 		return pivot
 	
@@ -250,7 +253,7 @@ class EmployeeTime:
 		return billingPeriod
 	
 	def locationsByCLIN(self):
-		noLocation = self.data.loc[self.data['Location'].isna()]
+		noLocation = self.data.loc[self.data['Country'].isna()]
 
 		if len(noLocation) > 0:
 			print(f'\n{len(noLocation)} records do not have a location:')
@@ -261,7 +264,7 @@ class EmployeeTime:
 			clinData = self.data.loc[self.data['CLIN'] == clin]
 
 			locations = []
-			for location in clinData['Location'].unique():
+			for location in clinData['Country'].unique():
 				locations.append(location)
 
 			result[clin] = locations
@@ -275,7 +278,7 @@ class EmployeeTime:
 			invoiceDetail = invoiceDetail.loc[invoiceDetail['CLIN'] == clin]
 
 		if location is not None:
-			invoiceDetail = invoiceDetail.loc[invoiceDetail['Location'] == location]
+			invoiceDetail = invoiceDetail.loc[invoiceDetail['Country'] == location]
 
 		# NOTE: ONLY uses Approved hours
 		omittedDetails = invoiceDetail.loc[self.data['State'] != 'Approved']
@@ -288,12 +291,12 @@ class EmployeeTime:
 		invoiceDetail = invoiceDetail.loc[invoiceDetail['State'] == 'Approved']
 
 		# debug - print the info for SubCLIN 0327
-		# print(invoiceDetail.loc[invoiceDetail['SubCLIN'] == '0327'])
+		# print(invoiceDetail.loc[invoiceDetail['RoleID'] == '0327'])
 
-		invoiceDetail = invoiceDetail.groupby(['SubCLIN', 'Description', 'EmployeeName', 'Rate'], as_index=False).agg({'Hours': 'sum'})
+		invoiceDetail = invoiceDetail.groupby(['RoleID', 'Description', 'EmployeeName', 'Rate'], as_index=False).agg({'Hours': 'sum'})
 		invoiceDetail['Amount'] = invoiceDetail['Hours'] * invoiceDetail['Rate']
-		invoiceDetail = invoiceDetail[['SubCLIN', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount']]
-		invoiceDetail.sort_values(['SubCLIN', 'EmployeeName', 'Description'], ascending=[True, True, False], inplace=True)
+		invoiceDetail = invoiceDetail[['RoleID', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount']]
+		invoiceDetail.sort_values(['RoleID', 'EmployeeName', 'Description'], ascending=[True, True, False], inplace=True)
 		return invoiceDetail
 	
 	def postByCountry(self, clin=None):
@@ -302,26 +305,26 @@ class EmployeeTime:
 		if clin is not None:
 			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
 
-		posts = costDetail.groupby(['Location'], as_index=False).agg({'Posting': 'sum'})
+		posts = costDetail.groupby(['Country'], as_index=False).agg({'Posting': 'sum'})
 		posts['CLIN'] = '207'
 		posts['Type'] = 'Post'
 		posts['G&A'] = posts['Posting'] * upchargeRate
 		posts['Total'] = posts['Posting'] + posts['G&A']
 		posts.rename(columns={'Posting': 'Amount'}, inplace=True)
-		posts = posts[['CLIN', 'Location', 'Type', 'Amount', 'G&A', 'Total']]
+		posts = posts[['CLIN', 'Country', 'Type', 'Amount', 'G&A', 'Total']]
 
-		hazards = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Hazard': 'sum'})
+		hazards = costDetail.groupby(['Country', 'PostName'], as_index=False).agg({'Hazard': 'sum'})
 
 		hazards['CLIN'] = '208'
 		hazards['Type'] = 'Hazard'
 		hazards['G&A'] = hazards['Hazard'] * upchargeRate
 		hazards['Total'] = hazards['Hazard'] + hazards['G&A']
 		hazards.rename(columns={'Hazard': 'Amount'}, inplace=True)
-		hazards = hazards[['CLIN', 'Location', 'Type', 'Amount', 'G&A', 'Total']]
+		hazards = hazards[['CLIN', 'Country', 'Type', 'Amount', 'G&A', 'Total']]
 
 		costs = pd.concat([posts, hazards])
 		costs = costs.loc[costs['Total'] > 0]
-		costs.sort_values(['Location'], inplace=True)
+		costs.sort_values(['Country'], inplace=True)
 
 		return costs
 	
@@ -331,7 +334,7 @@ class EmployeeTime:
 		if clin is not None:
 			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
 
-		summary = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Posting': 'sum'})
+		summary = costDetail.groupby(['Country', 'PostName'], as_index=False).agg({'Posting': 'sum'})
 		return summary
 
 	def hazardSummaryByCity(self, clin=None):
@@ -340,15 +343,15 @@ class EmployeeTime:
 		if clin is not None:
 			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
 
-		summary = costDetail.groupby(['Location', 'City'], as_index=False).agg({'Hazard': 'sum'})
+		summary = costDetail.groupby(['Country', 'PostName'], as_index=False).agg({'Hazard': 'sum'})
 		return summary
 
 	def groupedForHoursReport(self, clin=None, location=None):
 		details = self.details(clin=clin, location=location)
 
 		details = details[[
-			'City',
-			'SubCLIN', 
+			'PostName',
+			'RoleID', 
 			'EmployeeName', 
 			'Regular',
 			'LocalHoliday', 
@@ -359,7 +362,7 @@ class EmployeeTime:
 			'UnscheduledOT'
 		]]
 
-		invoiceDetail = details.groupby(['City', 'SubCLIN', 'EmployeeName'], as_index=False).agg({
+		invoiceDetail = details.groupby(['PostName', 'RoleID', 'EmployeeName'], as_index=False).agg({
 			'Regular': 'sum',
 			'LocalHoliday': 'sum',
 			'Admin': 'sum',
@@ -370,10 +373,10 @@ class EmployeeTime:
 		})
 
 		invoiceDetail['Subtotal'] = invoiceDetail['Regular'] + invoiceDetail['On-callOT'] + invoiceDetail['ScheduledOT'] + invoiceDetail['UnscheduledOT'] + invoiceDetail['Overtime'] + invoiceDetail['LocalHoliday'] + invoiceDetail['Admin']
-		invoiceDetail.sort_values(['City', 'SubCLIN', 'EmployeeName'], inplace=True)
+		invoiceDetail.sort_values(['PostName', 'RoleID', 'EmployeeName'], inplace=True)
 
 		invoiceDetail.rename(columns={
-			'SubCLIN': 'CLIN', 
+			'RoleID': 'CLIN', 
 			'EmployeeName': 'Name',
 			'On-callOT': 'On-call OT',
 			'ScheduledOT': 'Sched OT',
@@ -389,9 +392,9 @@ class EmployeeTime:
 		# details.sort_values(['Date', 'EmployeeName'], inplace=True)
 
 		grouped = details.groupby(['EmployeeName', 'Date'], as_index=False).agg({
-			'Location': 'first',
-			'City': 'first',
-			'SubCLIN': 'first',
+			'Country': 'first',
+			'PostName': 'first',
+			'RoleID': 'first',
 			'Category': 'first',
 			'Regular': 'sum',
 			'LocalHoliday': 'sum',
@@ -403,7 +406,7 @@ class EmployeeTime:
 			'HoursReg': 'sum',
 			'HoursOT': 'sum',
 			'HoursTotal': 'sum',
-			'HourlyRateReg': 'first',
+			'HourlyRate': 'first',
 			'RegularWages': 'sum',
 			'PostingRate': 'first',
 			'Posting': 'sum',
@@ -418,11 +421,11 @@ class EmployeeTime:
 		details.drop(columns=['CLIN'], inplace=True)
 		# details.sort_values(['Date', 'EmployeeName'], inplace=True)
 
-		grouped = details.groupby(['SubCLIN', 'EmployeeName'], as_index=False).agg({
-			'Location': 'first',
-			'City': 'first',
+		grouped = details.groupby(['RoleID', 'EmployeeName'], as_index=False).agg({
+			'Country': 'first',
+			'PostName': 'first',
 			'Regular': 'sum',
-			'HourlyRateReg': 'first',
+			'HourlyRate': 'first',
 			'RegularWages': 'sum',
 			'PostingRate': 'first',
 			'Posting': 'sum'
@@ -430,16 +433,16 @@ class EmployeeTime:
 
 		# reorder the columns to be more useful
 		grouped = grouped[[
-			'City', 'SubCLIN', 'EmployeeName',
-			'Regular', 'HourlyRateReg', 'RegularWages', 
+			'PostName', 'RoleID', 'EmployeeName',
+			'Regular', 'HourlyRate', 'RegularWages', 
 			'PostingRate', 'Posting'
 		]]
 
 		# rename columns to be more readable
 		grouped.rename(columns={
-			'SubCLIN': 'CLIN',
+			'RoleID': 'CLIN',
 			'EmployeeName': 'Name',
-			'HourlyRateReg': 'Rate',
+			'HourlyRate': 'Rate',
 			'RegularWages': 'Regular Wages',
 			'PostingRate': 'Post Rate',
 			'Posting': 'Post'
@@ -451,11 +454,11 @@ class EmployeeTime:
 		details = self.details(clin=clin, location=location)
 		details.drop(columns=['CLIN'], inplace=True)
 
-		grouped = details.groupby(['SubCLIN', 'EmployeeName'], as_index=False).agg({
-			'Location': 'first',
-			'City': 'first',
+		grouped = details.groupby(['RoleID', 'EmployeeName'], as_index=False).agg({
+			'Country': 'first',
+			'PostName': 'first',
 			'Regular': 'sum',
-			'HourlyRateReg': 'first',
+			'HourlyRate': 'first',
 			'RegularWages': 'sum',
 			'HazardRate': 'first',
 			'Hazard': 'sum'
@@ -463,16 +466,16 @@ class EmployeeTime:
 
 		# reorder the columns to be more useful
 		grouped = grouped[[
-			'City', 'SubCLIN', 'EmployeeName',
-			'Regular', 'HourlyRateReg', 'RegularWages', 
+			'PostName', 'RoleID', 'EmployeeName',
+			'Regular', 'HourlyRate', 'RegularWages', 
 			'HazardRate', 'Hazard'
 		]]
 
 		# rename columns to be more readable
 		grouped.rename(columns={
-			'SubCLIN': 'CLIN',
+			'RoleID': 'CLIN',
 			'EmployeeName': 'Name',
-			'HourlyRateReg': 'Rate',
+			'HourlyRate': 'Rate',
 			'RegularWages': 'Regular Wages',
 			'HazardRate': 'Hazard Rate'
 		}, inplace=True)
@@ -484,9 +487,9 @@ class EmployeeTime:
 	
 	# for status report
 	def byEmployee(self):
-		grouped = self.data.groupby(['Region', 'EmployeeName', 'SubCLIN', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
+		grouped = self.data.groupby(['Region', 'EmployeeName', 'RoleID', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
-		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'SubCLIN', 'State'], columns='TaskName', values='Hours').reset_index()
+		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'RoleID', 'State'], columns='TaskName', values='Hours').reset_index()
 
 		for taskName in TaskNames.values():
 			if taskName not in pivot.columns:
@@ -499,7 +502,7 @@ class EmployeeTime:
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
 
 		pivot = pivot[[
-			'Region', 'EmployeeName', 'SubCLIN', 'State',
+			'Region', 'EmployeeName', 'RoleID', 'State',
 			'Regular', 'LocalHoliday', 'Admin', 
 			'Holiday', 'Vacation', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
@@ -516,11 +519,11 @@ class EmployeeTime:
 			df = df.loc[df['CLIN'] == clin]
 
 		if location is not None:
-			df = df.loc[df['Location'] == location]
+			df = df.loc[df['Country'] == location]
 
-		grouped = df.groupby(['Region', 'EmployeeName', 'SubCLIN', 'Date', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
+		grouped = df.groupby(['Region', 'EmployeeName', 'RoleID', 'Date', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
-		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'SubCLIN', 'Date', 'State'], columns='TaskName', values='Hours').reset_index()
+		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'RoleID', 'Date', 'State'], columns='TaskName', values='Hours').reset_index()
 
 		for taskName in TaskNames.values():
 			if taskName not in pivot.columns:
@@ -533,7 +536,7 @@ class EmployeeTime:
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
 
 		pivot = pivot[[
-			'Region', 'Date', 'EmployeeName', 'SubCLIN', 'State',
+			'Region', 'Date', 'EmployeeName', 'RoleID', 'State',
 			'Regular', 'LocalHoliday', 'Admin', 
 			'Holiday', 'Vacation', 'Bereavement', 
 			'Overtime', 'On-callOT', 'ScheduledOT', 'UnscheduledOT', 
@@ -574,9 +577,13 @@ if __name__ == '__main__':
 		print(f'Usage: {sys.argv[0]} <activity file>')
 		exit()
 
-	time = EmployeeTime(activityFilename, verbose=False)
+	time = EmployeeTime(activityFilename, verbose=True)
 	employees = EmployeeInfo(verbose=False)
-	billingRates = BillingRates(verbose=False)
+
+	billingRates = BillingRates()
+	allowances = Allowances()
+	billingRates.joinWith(allowances)
+
 	employees.joinWith(billingRates)
 	time.joinWith(employees)
 

@@ -54,7 +54,7 @@ if __name__ == '__main__':
 	employees.joinWith(billingRates)
 	time.joinWith(employees)
 
-	employeesIncomplete = employees.data[employees.data['SubCLIN'].isna()]
+	employeesIncomplete = employees.data[employees.data['RoleID'].isna()]
 
 	if len(employeesIncomplete) > 0:
 		print(f'\n\n----------')

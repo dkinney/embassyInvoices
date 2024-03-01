@@ -100,11 +100,11 @@ def processActivityFromFile(filename):
 				rowsToSum = []
 
 				data = activity.groupedForInvoicing(clin=clin, location=location)
-				summary = pd.DataFrame(columns=['SubCLIN', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount'])
+				summary = pd.DataFrame(columns=['RoleID', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount'])
 				summary.loc[0] = ['', f'Totals for {location}', '', data['Hours'].sum(), '', data['Amount'].sum()]
 
-				for subCLIN in data['SubCLIN'].unique():
-					clinData = data[data['SubCLIN'] == subCLIN]
+				for subCLIN in data['RoleID'].unique():
+					clinData = data[data['RoleID'] == subCLIN]
 					rows = clinData.shape[0]
 					clinData.to_excel(writer, sheet_name=sheetName, startrow=summaryStartRow, startcol=0, header=False)
 					rowsToSum.append((summaryStartRow + 1, summaryStartRow + rows))
@@ -154,7 +154,7 @@ def processActivityFromFile(filename):
 
 				sheetName = f'Details-{location}'
 				details = activity.byDate(clin=clin, location=location)
-				details.drop(columns=['State', 'Region', 'Holiday', 'Vacation', 'Bereavement', 'HoursReg', 'HoursOT', 'SubCLIN'], inplace=True)
+				details.drop(columns=['State', 'Region', 'Holiday', 'Vacation', 'Bereavement', 'HoursReg', 'HoursOT', 'RoleID'], inplace=True)
 				# rename some columns for space
 				details.rename(columns={
 					'EmployeeName': 'Name',
