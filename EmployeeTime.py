@@ -575,7 +575,7 @@ if __name__ == '__main__':
 	time = EmployeeTime(activityFilename, verbose=True)
 	employees = EmployeeInfo(verbose=False)
 
-	billingRates = BillingRates()
+	billingRates = BillingRates(effectiveDate=time.dateStart, verbose=False)
 	allowances = Allowances()
 	billingRates.joinWith(allowances)
 

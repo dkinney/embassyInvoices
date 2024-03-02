@@ -25,17 +25,28 @@ class BillingRates:
 		# Define the data type will be used when reading in the data
 		# By default, it will try to make columns that only have numbers into numbers.
 		converters = {
-			'RoleID': str,
+			'Role ID': str,
 			'CLIN': str,
 			'Country': str,
-			'PostName': str,
-			'Category': str,
-			'EffectiveDate': str,
-			'BillRateReg': float,
-			'BillRateOT': float
+			'Post Name': str,
+			'Labor Category': str,
+			'Effective Date': str,
+			'Billing Rate Regular': str,
+			'Billing Rate Overtime': str,
+			'Note': str
 		}
 	
 		df = pd.read_excel(ratesFilename, header=0, converters=converters)
+
+		# rename columns for internal usage
+		df.rename(columns={
+			'Role ID': 'RoleID',
+			'Post Name': 'PostName',
+			'Labor Category': 'Category',
+			'Effective Date': 'EffectiveDate',
+			'Billing Rate Regular': 'BillRateReg',
+			'Billing Rate Overtime': 'BillRateOT'
+		}, inplace=True)
 
 		# make 'EffectiveDate' a datetime object
 		df['EffectiveDate'] = pd.to_datetime(df['EffectiveDate'])
@@ -43,6 +54,8 @@ class BillingRates:
 		# Set BillRateReg and BillRateOT values to zero if they are NaN
 		df['BillRateReg'].fillna(0, inplace=True)
 		df['BillRateOT'].fillna(0, inplace=True)
+
+		df['Note'].fillna('', inplace=True)
 
 		# strip whitespace from all string columns
 		df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
@@ -63,8 +76,8 @@ if __name__ == '__main__':
 
 	# Uses the effective date provided, or today's date if not provided
 	date = sys.argv[1] if len(sys.argv) > 1 else None
-
-	# effectiveDate = pd.to_datetime(date)
-	billingRates = BillingRates(effectiveDate=date, verbose=False)
+	
+	effectiveDate = pd.to_datetime(date)
+	billingRates = BillingRates(effectiveDate=effectiveDate, verbose=False)
 	print(billingRates.data)
 	# print(billingRates.data.info())

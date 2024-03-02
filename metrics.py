@@ -7,24 +7,24 @@ from EmployeeInfo import EmployeeInfo
 from BillingRates import BillingRates
 from Allowances import Allowances
 
+billingRates = BillingRates()
+allowances = Allowances()
+billingRates.joinWith(allowances)
+employees = EmployeeInfo()
+employees.joinWith(billingRates)
+
+comparison = employees.data[['EmployeeName', 'EmployeeID', 'Country', 'PostName', 'RoleID', 'Title', 'Category']]
+print(comparison)
+comparison.to_csv('employeeInfoComparison.csv', index=False)
+
+exit()
+
 if len(sys.argv) < 2:
     print(f'Usage: {sys.argv[0]} <billing activity file>')
     sys.exit(1)
 
 filename = sys.argv[1]
-
 time = EmployeeTime(filename)
-billingRates = BillingRates()
-
-allowances = Allowances()
-billingRates.joinWith(allowances)
-
-print('\nBilling Rates:')
-print(billingRates.data)
-
-employees = EmployeeInfo()
-
-employees.joinWith(billingRates)
 time.joinWith(employees)
 
 print('\nEmployee Time:')
