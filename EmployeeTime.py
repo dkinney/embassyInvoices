@@ -95,7 +95,25 @@ def cleanupTask(text):
 		return TaskMap[text]
 	
 	return text
+
+def rate(row):
+	if row['RateType'] == 'Overtime':
+		return row['BillRateOT']
 	
+	if row['RateType'] == 'Regular':
+		return row['BillRateReg']
+	
+	return 0
+
+def description(row):
+	if row['RateType'] == 'Overtime':
+		return '(Overtime)'
+	
+	if row['RateType'] == 'Regular':
+		return row['Category']
+	
+	return 0	
+
 class EmployeeTime:
 	def __init__(self, data:pd.DataFrame, verbose=False):
 		expectedColumns = ['EmployeeName', 'EmployeeID', 'Date', 'Description', 'TaskName', 'Hours', 'State']
@@ -173,8 +191,20 @@ class EmployeeTime:
 			print(unjoinedTime)
 
 		joined['Country'] = joined['Country'].fillna('Unknown')
-		joined['Rate'] = np.where(joined['RateType'] == 'Overtime', joined['BillRateOT'], joined['BillRateReg'])
-		joined['Description'] = np.where(joined['RateType'] == 'Overtime', '(Overtime)', joined['Category'])
+
+		print(f'\nDEBUG - RateType values: {joined["RateType"].unique()}')
+
+		joined['Rate'] = joined.apply(rate, axis=1)
+		
+		# make sure that 'Rate' is a float
+		print(joined['Rate'].unique())
+		joined['Rate'] = pd.to_numeric(joined['Rate'], errors="coerce")
+
+
+		joined['Description'] = joined.apply(description, axis=1)
+
+		# joined['Description'] = np.where(joined['RateType'] == 'Overtime', '(Overtime)', joined['Category'])
+
 		joined['RoleID'] = joined['RoleID'].str.replace('X', baseYear)
 		
 		# reorder the columns to be more useful
@@ -289,9 +319,14 @@ class EmployeeTime:
 		# print(invoiceDetail.loc[invoiceDetail['RoleID'] == '0327'])
 
 		invoiceDetail = invoiceDetail.groupby(['RoleID', 'Description', 'EmployeeName', 'Rate'], as_index=False).agg({'Hours': 'sum'})
+
+		print('groupedForInvoicing')
+		# print(invoiceDetail[['RoleID', 'Description', 'EmployeeName', 'Hours', 'Rate']])
+
 		invoiceDetail['Amount'] = invoiceDetail['Hours'] * invoiceDetail['Rate']
 		invoiceDetail = invoiceDetail[['RoleID', 'Description', 'EmployeeName', 'Hours', 'Rate', 'Amount']]
 		invoiceDetail.sort_values(['RoleID', 'EmployeeName', 'Description'], ascending=[True, True, False], inplace=True)
+
 		return invoiceDetail
 	
 	def postByCountry(self, clin=None):
@@ -572,7 +607,7 @@ if __name__ == '__main__':
 		print(f'Usage: {sys.argv[0]} <activity file>')
 		exit()
 
-	time = EmployeeTime(activityFilename, verbose=True)
+	time = EmployeeTime(activityFilename, verbose=False)
 	employees = EmployeeInfo(verbose=False)
 
 	billingRates = BillingRates(effectiveDate=time.dateStart, verbose=False)
@@ -595,12 +630,18 @@ if __name__ == '__main__':
 		regionDate = timeByDate.loc[timeByDate['Region'] == region]
 		regionDate = regionDate.drop(columns=['Region'])
 
+		notApproved = regionDate.loc[regionDate['State'] != 'Approved']
+		status = notApproved.groupby(['EmployeeName', 'State'], as_index=False).agg({'HoursTotal': 'sum'})
+		hoursNotApproved = status.loc[status['State'] != 'Approved']['HoursTotal'].sum()
+		print(f'\n{region}: {hoursNotApproved} Hours not approved across {len(status)} employees')
+		# print(status)
+
 		regionEmployee = timeByEmployee.loc[timeByEmployee['Region'] == region]
 		regionEmployee = regionEmployee.drop(columns=['Region'])
 
 		pattern = f'HoursStatus-{region}-{time.startYear()}-{time.startMonthName()}'
-		uniquifier = getUniquifier(pattern, type='HoursStatus', region=region, year=time.startYear(), monthName=time.startMonthName())
-		regionFile = f'{pattern}-{uniquifier:02d}.xlsx'
+		# uniquifier = getUniquifier(pattern, type='HoursStatus', region=region, year=time.startYear(), monthName=time.startMonthName())
+		regionFile = f'{pattern}.xlsx'
 
 		with pd.ExcelWriter(regionFile) as writer:
 			regionEmployee.to_excel(writer, sheet_name='Employee', startrow=0, startcol=0, header=True, index=False)

@@ -6,6 +6,7 @@ import glob
 from EmployeeTime import EmployeeTime
 from EmployeeInfo import EmployeeInfo
 from BillingRates import BillingRates
+from Allowances import Allowances
 
 # TERMINOLOGY:
 # CLIN: The identifier for the region (e.g. "CLIN 001")
@@ -160,22 +161,23 @@ if __name__ == '__main__':
 		print(f'Usage: {sys.argv[0]} <billing activity file>')
 		sys.exit(1)
 
-	filename = sys.argv[1]
+	reportData = sys.argv[1]
 
-	time = EmployeeTime(filename, verbose=False)
+	time = EmployeeTime(reportData)
 	effectiveDate = time.dateEnd
-	billingRates = BillingRates(effectiveDate=effectiveDate, verbose=False)
 
-	employees = EmployeeInfo(verbose=False)
+	allowances = Allowances(effectiveDate=effectiveDate)
+	billingRates = BillingRates(effectiveDate=effectiveDate)
+	billingRates.joinWith(allowances)
+
+	employees = EmployeeInfo()
 	employees.joinWith(billingRates)
+
 	time.joinWith(employees)
 
-	# activity = EmployeeTime(filename, verbose=False)
-	# effectiveDate = activity.dateEnd
-	# billingRates = BillingRates(effectiveDate=effectiveDate, verbose=False)
-	# activity.joinWith(billingRates)
-
 	labor = LaborData(time)
+
+	# exit()
 
 	print(f'\nTesting data structures:')
 
