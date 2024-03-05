@@ -107,14 +107,16 @@ class InvoiceData:
 		self.locationDetails[locationName] = location
 
 class LaborData:
-	def __init__(self, activity: EmployeeTime):
+	def __init__(self, time: EmployeeTime):
 		# create the data for creating labor invoices
 		# actual creation happens separately
+
+		self.time = time
 
 		# data is stored in a dictionary with the CLIN as the key
 		self.invoiceData = {}
 
-		locationInfo = activity.locationsByCLIN()
+		locationInfo = time.locationsByCLIN()
 		
 		for clin in locationInfo.keys():
 			invoiceData = None
@@ -128,7 +130,7 @@ class LaborData:
 				##########################################################################
 				# Data for labor invoices
 				##########################################################################
-				laborData = activity.groupedForInvoicing(clin=clin, location=location)
+				laborData = time.groupedForInvoicing(clin=clin, location=location)
 
 				for role in laborData['RoleID'].unique():
 					clinData = laborData[laborData['RoleID'] == role]
@@ -137,22 +139,35 @@ class LaborData:
 				##########################################################################
 				# Detail for hours report
 				##########################################################################
-				hoursSummary = activity.groupedForHoursReport(clin=clin, location=location)
+				hoursSummary = time.groupedForHoursReport(clin=clin, location=location)
 				invoiceData.addHoursSummary(location, hoursSummary)
 
-				hoursDetails = activity.byDate(clin=clin, location=location)
+				hoursDetails = time.byDate(clin=clin, location=location)
 				invoiceData.addHoursDetail(location, hoursDetails)
 
 			##########################################################################
 			# Data for post invoices
 			##########################################################################
-			postData = activity.groupedForPostReport(clin=clin)
+			postData = time.groupedForPostReport(clin=clin)
 			invoiceData.addPostDetail(postData)
 
-			hazardData = activity.groupedForHazardReport(clin=clin)
+			hazardData = time.groupedForHazardReport(clin=clin)
 			invoiceData.addHazardDetail(hazardData)
 
 			self.invoiceData[clin] = invoiceData
+
+	@classmethod
+	def fromReportFile(cls, filename: str) -> 'LaborData':
+		print(f'Creating labor data from {filename}')
+		time = EmployeeTime(filename=filename)
+		effectiveDate = time.dateEnd
+		allowances = Allowances(effectiveDate=effectiveDate)
+		billingRates = BillingRates(effectiveDate=effectiveDate)
+		billingRates.joinWith(allowances)
+		employees = EmployeeInfo()
+		employees.joinWith(billingRates)
+		time.joinWith(employees)
+		return cls(time)
 
 if __name__ == '__main__':
 	import sys
@@ -161,23 +176,8 @@ if __name__ == '__main__':
 		print(f'Usage: {sys.argv[0]} <billing activity file>')
 		sys.exit(1)
 
-	reportData = sys.argv[1]
-
-	time = EmployeeTime(reportData)
-	effectiveDate = time.dateEnd
-
-	allowances = Allowances(effectiveDate=effectiveDate)
-	billingRates = BillingRates(effectiveDate=effectiveDate)
-	billingRates.joinWith(allowances)
-
-	employees = EmployeeInfo()
-	employees.joinWith(billingRates)
-
-	time.joinWith(employees)
-
-	labor = LaborData(time)
-
-	# exit()
+	reportFile = sys.argv[1]
+	labor = LaborData.fromReportFile(reportFile)
 
 	print(f'\nTesting data structures:')
 
@@ -185,30 +185,30 @@ if __name__ == '__main__':
 		invoiceData = labor.invoiceData[clin]
 		print(f'CLIN: {clin}')
 
-		for locationName in sorted(invoiceData.locationDetails.keys()):
-			locationData = invoiceData.locationDetails[locationName]
+		# for locationName in sorted(invoiceData.locationDetails.keys()):
+		# 	locationData = invoiceData.locationDetails[locationName]
 
-			print(f'\nLabor Details: {len(locationData.laborDetails)}')
-			for item in locationData.laborDetails:
-				print(item)
-				summary = item.groupby(['RoleID']).agg({'Hours': 'sum', 'Amount': 'sum'}).reset_index()
-				print(summary)
-				print('---')
+		# 	print(f'\nLabor Details: {len(locationData.laborDetails)}')
+		# 	for item in locationData.laborDetails:
+		# 		print(item)
+		# 		summary = item.groupby(['RoleID']).agg({'Hours': 'sum', 'Amount': 'sum'}).reset_index()
+		# 		print(summary)
+		# 		print('---')
 			
-			print(f'Total Labor Hours for {locationName}: {locationData.laborHours}')
-			print(f'Total Labor Amount for {locationName}: {locationData.laborAmount}')
+		# 	print(f'Total Labor Hours for {locationName}: {locationData.laborHours}')
+		# 	print(f'Total Labor Amount for {locationName}: {locationData.laborAmount}')
 
-			print('\n-------------------------')
-			print(f'Hours Summary: {locationName}')
-			for item in locationData.hoursSummary:
-				print(item)
-				print('---')
+		# 	print('\n-------------------------')
+		# 	print(f'Hours Summary: {locationName}')
+		# 	for item in locationData.hoursSummary:
+		# 		print(item)
+		# 		print('---')
 
-			print('\n-------------------------')
-			print(f'Hours Detail: {locationName}')
-			for item in locationData.hoursDetail:
-				print(item)
-				print('---')
+		# 	print('\n-------------------------')
+		# 	print(f'Hours Detail: {locationName}')
+		# 	for item in locationData.hoursDetail:
+		# 		print(item)
+		# 		print('---')
 
 		print('\n-------------------------')
 		print(f'Post Details for {clin}: {len(invoiceData.postDetails)}')

@@ -6,9 +6,10 @@ from Config import Config
 from LaborData import LaborData
 
 from InvoiceStyles import styles
-from InvoiceFormat import formatInvoiceTab
+from InvoiceFormat import formatHoursTab, formatHoursDetailsTab
 
 config = Config()
+
 Regions = {}
 
 versionString = f'v{config.data["version"]}'
@@ -53,7 +54,7 @@ if __name__ == '__main__':
 		region = Regions[clin]
 		invoiceData = labor.invoiceData[clin]
 
-		reportType = 'Labor'
+		reportType = 'HoursStatus'
 		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
 		outputFile = f'{pattern}.xlsx'
 
@@ -61,49 +62,30 @@ if __name__ == '__main__':
 
 		with pd.ExcelWriter(outputFile) as writer:
 			for locationName in sorted(invoiceData.locationDetails.keys()):
-				if locationName not in locationInfo[clin] or locationName == 'Unknown':
-					print(f'\n----------\nWarning: {locationName} is not in the locationInfo dictionary\n----------\n')
-					continue
-
 				locationData = invoiceData.locationDetails[locationName]
-				sheetName = f'Labor-{locationName}'
-				summaryStartRow = 22
-				rowsToSum = []
 
-				for item in locationData.laborDetails:
-					item.to_excel(writer, sheet_name=sheetName, startrow=summaryStartRow, startcol=0, header=False)
-					rowsToSum.append((summaryStartRow + 1, summaryStartRow + len(item)))
-					summaryStartRow += len(item) + 2
+				sheetName = f'Hours-{locationName}'
+				for item in locationData.hoursSummary:
+					item.to_excel(writer, sheet_name=sheetName, startrow=0, startcol=0, index=False, header=True)
 
-				summary = summaryDataframe(f'Totals for {locationName}', locationData.laborHours, locationData.laborAmount)
-				summary.to_excel(writer, sheet_name=sheetName, startrow=summaryStartRow, startcol=0, header=False)
-
-				invoiceNumber = f'SD-{invoiceNumberValue:04d}'
-				invoiceNumberValue += 1
-				billingPeriod = time.billingPeriod()
-
-				invoiceDetail = {
-					'description': f'{time.dateStart.strftime("%B")} {startYear}',
-					'region': locationName,
-					'filename': outputFile,
-					'type': 'Labor',
-					'invoiceNumber': invoiceNumber,
-					'taskOrder': f'Labor-{locationName}',
-					'billingPeriod': billingPeriod,
-					'invoiceAmount': 0,
-					'rowsToSum': rowsToSum
-				}
-
-				sheetInfo[sheetName] = invoiceDetail
+				sheetName = f'Details-{locationName}'
+				for item in locationData.hoursDetail:
+					item.to_excel(writer, sheet_name=sheetName, startrow=0, startcol=0, index=False, header=True)
 		
 		workbook = load_workbook(outputFile)
 
 		for styleName in styles.keys():
 			workbook.add_named_style(styles[styleName])
 
-		for key in sheetInfo.keys():
-			worksheet = workbook[key]
-			info = sheetInfo[key]
-			formatInvoiceTab(worksheet, info)
+		for locationName in sorted(invoiceData.locationDetails.keys()):
+			worksheet = workbook[f'Hours-{locationName}']
+			# invoiceNumber = laborInvoiceNumber + CountryCodes[location]
+			
+			formatHoursTab(worksheet, 
+				  approvers=CountryApprovers[locationName], 
+				  locationName=locationName, billingFrom=time.billingPeriod())
+			
+			worksheet = workbook[f'Details-{locationName}']
+			formatHoursDetailsTab(worksheet, locationName=locationName, billingFrom=time.billingPeriod())
 
 		workbook.save(outputFile)
