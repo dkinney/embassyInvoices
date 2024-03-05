@@ -23,7 +23,13 @@ config = Config()
 contractNumber = config.data['contractNumber']
 baseYear = config.data['baseYear']
 upchargeRate = config.data['upchargeRate']
-clins = config.data['regions']
+# clins = config.data['regions']
+
+# get region dictionary from config and swap keys and values
+# to make it easy to look up the region name from the CLIN
+Regions = {}
+for region in config.data['regions']:
+	Regions[config.data['regions'][region]] = region
 
 TaskNames = {
 	'3322': 'Regular',
@@ -173,15 +179,17 @@ class EmployeeTime:
 			print(f'{len(unjoinedTime)} records do not have a location:')
 			print(unjoinedTime)
 		
+		# zero pad the CLIN to be 3 digit string
+		joined['CLIN'] = joined['CLIN'].str.zfill(3)
+
+		# lookup the Region from the CLIN
+		joined['Region'] = joined['CLIN'].map(Regions)
+
 		joined['Country'] = joined['Country'].fillna('Unknown')
 		joined['Rate'] = joined.apply(rate, axis=1)
 		joined['Rate'] = pd.to_numeric(joined['Rate'], errors="coerce")
 		joined['Description'] = joined.apply(description, axis=1)
 		joined['RoleID'] = joined['RoleID'].str.replace('X', baseYear)
-		joined['Region'] = np.where(joined['CLIN'] == 1, 'Asia', 'Europe')
-
-		# zero pad the CLIN to be 3 digit string
-		joined['CLIN'] = joined['CLIN'].str.zfill(3)
 		
 		# reorder the columns to be more useful
 		joined = joined[['Date', 'CLIN', 'Region', 'Country', 'PostName', 'RoleID', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'State', 'Rate', 'HourlyRate', 'PostingRate', 'HazardRate']]
@@ -484,7 +492,7 @@ class EmployeeTime:
 		return grouped
 	
 	# for status report
-	def byEmployee(self):
+	def byEmployee(self, clin=None, location=None):
 		grouped = self.data.groupby(['Region', 'EmployeeName', 'RoleID', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
 		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'RoleID', 'State'], columns='TaskName', values='Hours').reset_index()
@@ -559,8 +567,14 @@ class EmployeeTime:
 		return(pivot)
 	
 	# for status report
-	def statusByDate(self):
-		df = self.data # .copy()
+	def statusByDate(self, clin=None, location=None):
+		df = self.data.copy()
+
+		if clin is not None:
+			df = df.loc[df['CLIN'] == clin]
+
+		if location is not None:
+			df = df.loc[df['Country'] == location]
 
 		grouped = df.groupby(['Region', 'EmployeeName', 'RoleID', 'Date', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
@@ -618,39 +632,44 @@ if __name__ == '__main__':
 		print(f'Usage: {sys.argv[0]} <activity file>')
 		exit()
 
-	time = EmployeeTime(activityFilename, verbose=False)
-	employees = EmployeeInfo(verbose=False)
-
-	billingRates = BillingRates(effectiveDate=time.dateStart, verbose=False)
-	allowances = Allowances()
+	time = EmployeeTime(filename=activityFilename)
+	effectiveDate = time.dateEnd
+	allowances = Allowances(effectiveDate=effectiveDate)
+	billingRates = BillingRates(effectiveDate=effectiveDate)
 	billingRates.joinWith(allowances)
-
+	employees = EmployeeInfo()
 	employees.joinWith(billingRates)
 	time.joinWith(employees)
 
 	print(f'\nActivity from {time.dateStart} to {time.dateEnd}')
-	now = pd.Timestamp.now().strftime("%m%d%H%M")
+	# now = pd.Timestamp.now().strftime("%m%d%H%M")
+
 
 	timeByDate = time.statusByDate()
 	timeByDate.sort_values(['Date', 'EmployeeName'], ascending=[False, True], inplace=True)
 
 	timeByEmployee = time.byEmployee()
 
-	for region in ['Asia', 'Europe']:
-		regionDate = timeByDate.loc[timeByDate['Region'] == region]
+	for clin in sorted(time.data.CLIN.unique()):
+		region = Regions[clin]
+		regionDate = time.statusByDate(clin=clin)
 		regionDate = regionDate.drop(columns=['Region'])
+		regionDate.sort_values(['Date', 'EmployeeName'], ascending=[False, True], inplace=True)
+
 
 		notApproved = regionDate.loc[regionDate['State'] != 'Approved']
 		status = notApproved.groupby(['EmployeeName', 'State'], as_index=False).agg({'HoursTotal': 'sum'})
 		hoursNotApproved = status.loc[status['State'] != 'Approved']['HoursTotal'].sum()
-		print(f'\n{region}: {hoursNotApproved} Hours not approved across {len(status)} employees')
-		# print(status)
 
-		regionEmployee = timeByEmployee.loc[timeByEmployee['Region'] == region]
+		if hoursNotApproved > 0:
+			print(f'{Regions[clin]} ({clin}): {hoursNotApproved} Hours not approved across {len(status)} employees')
+
+		regionEmployee = time.byEmployee(clin=clin)
 		regionEmployee = regionEmployee.drop(columns=['Region'])
 
+		print(regionEmployee)
+
 		pattern = f'HoursStatus-{region}-{time.startYear()}-{time.startMonthName()}'
-		# uniquifier = getUniquifier(pattern, type='HoursStatus', region=region, year=time.startYear(), monthName=time.startMonthName())
 		regionFile = f'{pattern}.xlsx'
 
 		with pd.ExcelWriter(regionFile) as writer:
@@ -661,11 +680,11 @@ if __name__ == '__main__':
 
 		for styleName in styles.keys():
 			workbook.add_named_style(styles[styleName])
-			
-		worksheet = workbook['Date']
-		formatTimeByDate(worksheet)
-
+		
 		worksheet = workbook['Employee']
 		formatTimeByEmployee(worksheet)
+
+		worksheet = workbook['Date']
+		formatTimeByDate(worksheet)
 
 		workbook.save(regionFile)

@@ -54,7 +54,7 @@ if __name__ == '__main__':
 		region = Regions[clin]
 		invoiceData = labor.invoiceData[clin]
 
-		reportType = 'HoursStatus'
+		reportType = 'HoursApproval'
 		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
 		outputFile = f'{pattern}.xlsx'
 
