@@ -114,6 +114,8 @@ class LaborData:
 		self.time = time
 
 		# data is stored in a dictionary with the CLIN as the key
+
+		# data organized for presentation in a labor invoice
 		self.invoiceData = {}
 
 		locationInfo = time.locationsByCLIN()
@@ -126,6 +128,7 @@ class LaborData:
 			else:
 				invoiceData = self.invoiceData[clin]
 
+			# build the invoiceDetails for each location
 			for location in locationInfo[clin]:
 				##########################################################################
 				# Data for labor invoices
@@ -133,6 +136,7 @@ class LaborData:
 				laborData = time.groupedForInvoicing(clin=clin, location=location)
 
 				for role in laborData['RoleID'].unique():
+					# print(f'laborData {location} - {role}')
 					clinData = laborData[laborData['RoleID'] == role]
 					invoiceData.addLaborDetail(location, clinData)
 
@@ -140,6 +144,8 @@ class LaborData:
 				# Detail for hours report
 				##########################################################################
 				hoursSummary = time.groupedForHoursReport(clin=clin, location=location)
+				# print(f'hoursSummary: {location}')
+				# print(hoursSummary)
 				invoiceData.addHoursSummary(location, hoursSummary)
 
 				hoursDetails = time.byDate(clin=clin, location=location)
@@ -181,45 +187,63 @@ if __name__ == '__main__':
 
 	print(f'\nTesting data structures:')
 
+	clin = '002'
+	country = 'Russia'
+
+	hours = labor.time.data
+	hours = hours.loc[hours['CLIN'] == clin]
+	hours = hours.loc[hours['Country'] == country]
+	print(f'hours {country}: {hours.PostName.unique()}')
+
+	print(hours)
+
+	print(f'\nPivot:')
+
+	# keep the existing columns but pivot the TaskName into columns
+	pivot = hours.pivot_table(index=[
+		'Date', 'CLIN', 'Country', 'PostName', 
+		'RoleID', 'Category', 'EmployeeName', 
+		'Rate', 'HourlyRate', 'PostingRate', 'HazardRate'
+	], columns=['TaskName'], values=['Hours'], aggfunc='sum', fill_value=0).reset_index()
+
+
+	print(pivot)
+	print(f'hours {country}: {hours.PostName.unique()}')
+
+
+	hoursSummary = labor.time.groupedForHoursReport(clin=clin, location=country)
+
+	print(f'hoursSummary: {country}\n{hoursSummary}')
+
+	# print(f'hoursSummary: {country}, {hoursSummary.PostName.unique()}')
+	# print(hoursSummary)
+
+	exit()
+
 	for clin in sorted(labor.invoiceData.keys()):
 		invoiceData = labor.invoiceData[clin]
+
 		print(f'CLIN: {clin}')
+		print(f'Locations: {sorted(invoiceData.locationDetails.keys())}')
 
-		# for locationName in sorted(invoiceData.locationDetails.keys()):
-		# 	locationData = invoiceData.locationDetails[locationName]
+		for locationName in sorted(invoiceData.locationDetails.keys()):
+			invoiceDetails = invoiceData.locationDetails[locationName]
 
-		# 	print(f'\nLabor Details: {len(locationData.laborDetails)}')
-		# 	for item in locationData.laborDetails:
-		# 		print(item)
-		# 		summary = item.groupby(['RoleID']).agg({'Hours': 'sum', 'Amount': 'sum'}).reset_index()
-		# 		print(summary)
-		# 		print('---')
-			
-		# 	print(f'Total Labor Hours for {locationName}: {locationData.laborHours}')
-		# 	print(f'Total Labor Amount for {locationName}: {locationData.laborAmount}')
+			# data = labor.time.groupedForInvoicing(clin=clin, location=locationName)
+			# print(f'Location: {locationName}')
+			# print(data)
+			# print('\n')
 
-		# 	print('\n-------------------------')
-		# 	print(f'Hours Summary: {locationName}')
-		# 	for item in locationData.hoursSummary:
-		# 		print(item)
-		# 		print('---')
+		# print('\n-------------------------')
+		# print(f'Post Details for {clin}: {len(invoiceData.postDetails)}')
+		# print(invoiceData.postDetails)
+		# summary = invoiceData.postDetails.groupby(['PostName']).agg({'Post': 'sum'}).reset_index()
+		# print(summary)
+		# print('---')
 
-		# 	print('\n-------------------------')
-		# 	print(f'Hours Detail: {locationName}')
-		# 	for item in locationData.hoursDetail:
-		# 		print(item)
-		# 		print('---')
-
-		print('\n-------------------------')
-		print(f'Post Details for {clin}: {len(invoiceData.postDetails)}')
-		print(invoiceData.postDetails)
-		summary = invoiceData.postDetails.groupby(['PostName']).agg({'Post': 'sum'}).reset_index()
-		print(summary)
-		print('---')
-
-		print('\n-------------------------')
-		print(f'Hazard Details for {clin}: {len(invoiceData.hazardDetails)}')
-		print(invoiceData.hazardDetails)
-		summary = invoiceData.hazardDetails.groupby(['PostName']).agg({'Hazard': 'sum'}).reset_index()
-		print(summary)
-		print('---')
+		# print('\n-------------------------')
+		# print(f'Hazard Details for {clin}: {len(invoiceData.hazardDetails)}')
+		# print(invoiceData.hazardDetails)
+		# summary = invoiceData.hazardDetails.groupby(['PostName']).agg({'Hazard': 'sum'}).reset_index()
+		# print(summary)
+		# print('---')
