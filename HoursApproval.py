@@ -52,6 +52,9 @@ if __name__ == '__main__':
 
 	for clin in locationInfo.keys():
 		region = Regions[clin]
+
+		# this report uses invoiceData instead of time since it 
+		# needs to be limited to Approved hours only
 		invoiceData = labor.invoiceData[clin]
 
 		reportType = 'HoursApproval'
