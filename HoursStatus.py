@@ -42,7 +42,7 @@ if __name__ == '__main__':
 		outputFile = f'{pattern}.xlsx'
 
 		regionDate = time.statusByDate(clin=clin)
-		regionDate = regionDate.drop(columns=['Region'])
+		regionDate.drop(columns=['PostName'], inplace=True)
 
 		# if all hours are approved sort ascending by date, false if not
 		dateAscending = regionDate['State'].eq('Approved').all()
@@ -50,7 +50,6 @@ if __name__ == '__main__':
 		regionDate.sort_values(['Date', 'EmployeeName'], ascending=[dateAscending, True], inplace=True)
 
 		regionEmployee = time.byEmployee(clin=clin)
-		regionEmployee = regionEmployee.drop(columns=['Region'])
 
 		with pd.ExcelWriter(outputFile) as writer:
 			regionEmployee.to_excel(writer, sheet_name='Employee', startrow=0, startcol=0, header=True, index=False)
