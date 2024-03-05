@@ -1049,10 +1049,10 @@ def formatTimeByDate(worksheet):
 def formatTimeByEmployee(worksheet):
     worksheet.insert_rows(1, 1)
 
-    styleColumn(worksheet, 'A', 'Name')
+    styleColumn(worksheet, 'A', 'City')
     styleColumn(worksheet, 'B', 'SubCLIN')
-    styleColumn(worksheet, 'C', 'State')
-    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'C', 'Name')
+    styleColumn(worksheet, 'D', 'State')
     styleColumn(worksheet, 'E', 'Hours')
     styleColumn(worksheet, 'F', 'Hours')
     styleColumn(worksheet, 'G', 'Hours')
@@ -1065,16 +1065,16 @@ def formatTimeByEmployee(worksheet):
     styleColumn(worksheet, 'N', 'Hours')
     styleColumn(worksheet, 'O', 'Hours')
     styleColumn(worksheet, 'P', 'Hours')
+    styleColumn(worksheet, 'Q', 'Hours')
 
     # create a table
-    # table = Table(displayName=worksheet.title, ref="A2:O" + str(worksheet.max_row))
-    # worksheet.add_table(table)
-    # worksheet.freeze_panes = worksheet['A3']
+    table = Table(displayName=worksheet.title, ref="A2:O" + str(worksheet.max_row))
+    worksheet.add_table(table)
+    worksheet.freeze_panes = worksheet['A3']
 
     # add SUM() formulas
     start = 3
     stop = worksheet.max_row
-    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
     sumColumn(worksheet, 'E', 'number', start, stop, top=True)
     sumColumn(worksheet, 'F', 'number', start, stop, top=True)
     sumColumn(worksheet, 'G', 'number', start, stop, top=True)
@@ -1087,25 +1087,26 @@ def formatTimeByEmployee(worksheet):
     sumColumn(worksheet, 'N', 'number', start, stop, top=True)
     sumColumn(worksheet, 'O', 'number', start, stop, top=True)
     sumColumn(worksheet, 'P', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'Q', 'number', start, stop, top=True)
 
     for row in range(3, stop + 1):
-        if worksheet[f'C{row}'].value == "Approved":
+        if worksheet[f'D{row}'].value == "Approved":
             pass
-        elif worksheet[f'C{row}'].value == "Submitted":
+        elif worksheet[f'D{row}'].value == "Submitted":
             highlightRow(worksheet, row, color=yellow)
-        elif worksheet[f'C{row}'].value == "Draft":
+        elif worksheet[f'D{row}'].value == "Draft":
             highlightRow(worksheet, row, color=gray)
-        elif worksheet[f'C{row}'].value == "Declined":
+        elif worksheet[f'D{row}'].value == "Declined":
             highlightRow(worksheet, row, color=orange)  
         else:
             highlightRow(worksheet, row)
 
     # add a fill for columns that are non-billable
-    for column in ['G', 'H', 'I']:
+    for column in ['H', 'I', 'J']:
         for row in range(1, stop):
             worksheet[column][row].fill = gray
     # add a fill for columns to show that they are are summary columns
-    for column in ['N', 'O', 'P']:
+    for column in ['O', 'P', 'Q']:
         for row in range(1, stop):
             worksheet[column][row].fill = lightBlue
 

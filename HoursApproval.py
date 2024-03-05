@@ -33,6 +33,67 @@ def summaryDataframe(description:str, hours:float, amount:float) -> pd.DataFrame
 
 	return pd.DataFrame(data, index=[0])
 
+def dateDetails(clin:str = None, location:str = None) -> pd.DataFrame:
+	regionDate = time.statusByDate(clin=clin, location=location)
+
+	regionDate.drop(columns=['PostName'], inplace=True)
+
+	notApproved = regionDate['State'].ne('Approved')
+
+	if notApproved.any():
+		print(f'Warning: {notApproved.sum()} hours not approved for {region} CLIN {clin}')
+		print(regionDate.loc[notApproved])
+
+	regionDate.sort_values(['EmployeeName', 'Date'], ascending=[True, True], inplace=True)
+
+	# drop columns that are not necessary for Approvals
+	regionDate.drop(columns=[
+		'RoleID',
+		'State',
+		'Holiday',
+		'Vacation',
+		'Bereavement',
+		'HoursReg',
+		'HoursOT'
+	], inplace=True)
+
+	# rename columns for clarity
+	regionDate.rename(columns={
+		'EmployeeName': 'Name',
+		'On-callOT': 'On-call OT',
+		'ScheduledOT': 'Sched OT',
+		'UnscheduledOT': 'Unschd OT',
+		'LocalHoliday': 'Local Hol',
+		'HoursTotal': 'Subtotal'
+	}, inplace=True)
+
+	return regionDate
+
+def employeeDetails(clin:str = None, location:str = None) -> pd.DataFrame:
+	regionEmployee = time.byEmployee(clin=clin, location=location)
+
+	# drop columns that are not necessary for Approvals
+	regionEmployee.drop(columns=[
+		'State',
+		'Holiday',
+		'Vacation',
+		'Bereavement',
+		'HoursReg',
+		'HoursOT'
+	], inplace=True)
+
+	# rename columns for clarity
+	regionEmployee.rename(columns={
+		'EmployeeName': 'Name',
+		'On-callOT': 'On-call OT',
+		'ScheduledOT': 'Sched OT',
+		'UnscheduledOT': 'Unschd OT',
+		'LocalHoliday': 'Local Hol',
+		'HoursTotal': 'Subtotal'
+	}, inplace=True)
+
+	return regionEmployee
+
 if __name__ == '__main__':
 	import sys
 
@@ -48,47 +109,42 @@ if __name__ == '__main__':
 	startYear = time.startYear()
 	startMonth = time.startMonthName()
 	locationInfo = time.locationsByCLIN()
-	invoiceNumberValue = config.data['nextInvoiceNumber']
 
 	for clin in locationInfo.keys():
-		region = Regions[clin]
-
-		# this report uses invoiceData instead of time since it 
-		# needs to be limited to Approved hours only
-		invoiceData = labor.invoiceData[clin]
-
 		reportType = 'HoursApproval'
+		region = Regions[clin]
 		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
 		outputFile = f'{pattern}.xlsx'
 
-		sheetInfo = {}
+		print('region:', region)
 
-		with pd.ExcelWriter(outputFile) as writer:
-			for locationName in sorted(invoiceData.locationDetails.keys()):
-				locationData = invoiceData.locationDetails[locationName]
-
-				sheetName = f'Hours-{locationName}'
-				for item in locationData.hoursSummary:
-					item.to_excel(writer, sheet_name=sheetName, startrow=0, startcol=0, index=False, header=True)
-
-				sheetName = f'Details-{locationName}'
-				for item in locationData.hoursDetail:
-					item.to_excel(writer, sheet_name=sheetName, startrow=0, startcol=0, index=False, header=True)
+		byDate = dateDetails(clin=clin)
+		byEmployee = employeeDetails(clin=clin)
 		
+		with pd.ExcelWriter(outputFile) as writer:
+			for country in sorted(locationInfo[clin]):
+				print('country:', country)
+
+				byEmployee = employeeDetails(clin=clin, location=country)
+				byEmployee.to_excel(writer, sheet_name=f'Hours-{country}', startrow=0, startcol=0, header=True, index=False)
+
+				byDate = dateDetails(clin=clin, location=country)
+				byDate.to_excel(writer, sheet_name=f'Details-{country}', startrow=0, startcol=0, header=True, index=False)
+
 		workbook = load_workbook(outputFile)
 
 		for styleName in styles.keys():
 			workbook.add_named_style(styles[styleName])
 
-		for locationName in sorted(invoiceData.locationDetails.keys()):
-			worksheet = workbook[f'Hours-{locationName}']
+		for country in sorted(locationInfo[clin]):
+			worksheet = workbook[f'Hours-{country}']
 			# invoiceNumber = laborInvoiceNumber + CountryCodes[location]
 			
 			formatHoursTab(worksheet, 
-				  approvers=CountryApprovers[locationName], 
-				  locationName=locationName, billingFrom=time.billingPeriod())
+				  approvers=CountryApprovers[country], 
+				  locationName=country, billingFrom=time.billingPeriod())
 			
-			worksheet = workbook[f'Details-{locationName}']
-			formatHoursDetailsTab(worksheet, locationName=locationName, billingFrom=time.billingPeriod())
+			worksheet = workbook[f'Details-{country}']
+			formatHoursDetailsTab(worksheet, locationName=country, billingFrom=time.billingPeriod())
 
 		workbook.save(outputFile)
