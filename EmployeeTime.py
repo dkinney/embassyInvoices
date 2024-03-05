@@ -493,7 +493,17 @@ class EmployeeTime:
 	
 	# for status report
 	def byEmployee(self, clin=None, location=None):
-		grouped = self.data.groupby(['Region', 'EmployeeName', 'RoleID', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
+		df = self.data.copy()
+
+		if clin is not None:
+			df = df.loc[df['CLIN'] == clin]
+
+		if location is not None:
+			df = df.loc[df['Country'] == location]
+
+		# print('byEmployee Countries: ', df['Country'].unique())
+
+		grouped = df.groupby(['Region', 'EmployeeName', 'RoleID', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
 		pivot = grouped.pivot_table(index=['Region', 'EmployeeName', 'RoleID', 'State'], columns='TaskName', values='Hours').reset_index()
 
@@ -525,6 +535,8 @@ class EmployeeTime:
 
 		if location is not None:
 			df = df.loc[df['Country'] == location]
+
+		# print('byDate Countries: ', df['Country'].unique())
 
 		grouped = df.groupby(['Region', 'EmployeeName', 'RoleID', 'Date', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
@@ -575,6 +587,8 @@ class EmployeeTime:
 
 		if location is not None:
 			df = df.loc[df['Country'] == location]
+
+		# print('statusByDate Countries: ', df['Country'].unique())
 
 		grouped = df.groupby(['Region', 'EmployeeName', 'RoleID', 'Date', 'TaskName', 'State'], as_index=False).agg({'Hours': 'sum'})
 
