@@ -527,7 +527,7 @@ def formatHoursDetailsTab(worksheet, locationName=None, invoiceNumber=None, bill
         for r in range(start - 2, stop):
             worksheet[column + str(r + 1)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
 
-    worksheet['G1'] = 'Invoice Date:'
+    worksheet['G1'] = 'Report Date:'
     worksheet['H1'] = processingDate
     worksheet['G1'].style = 'invoiceHeader'
     worksheet['H1'].style = 'invoiceValue'
