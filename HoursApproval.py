@@ -33,67 +33,6 @@ def summaryDataframe(description:str, hours:float, amount:float) -> pd.DataFrame
 
 	return pd.DataFrame(data, index=[0])
 
-def dateDetails(clin:str = None, location:str = None) -> pd.DataFrame:
-	regionDate = time.statusByDate(clin=clin, location=location)
-
-	regionDate.drop(columns=['PostName'], inplace=True)
-
-	notApproved = regionDate['State'].ne('Approved')
-
-	if notApproved.any():
-		print(f'Warning: {notApproved.sum()} hours not approved for {region} CLIN {clin}')
-		print(regionDate.loc[notApproved])
-
-	regionDate.sort_values(['EmployeeName', 'Date'], ascending=[True, True], inplace=True)
-
-	# drop columns that are not necessary for Approvals
-	regionDate.drop(columns=[
-		'RoleID',
-		'State',
-		'Holiday',
-		'Vacation',
-		'Bereavement',
-		'HoursReg',
-		'HoursOT'
-	], inplace=True)
-
-	# rename columns for clarity
-	regionDate.rename(columns={
-		'EmployeeName': 'Name',
-		'On-callOT': 'On-call OT',
-		'ScheduledOT': 'Sched OT',
-		'UnscheduledOT': 'Unschd OT',
-		'LocalHoliday': 'Local Hol',
-		'HoursTotal': 'Subtotal'
-	}, inplace=True)
-
-	return regionDate
-
-def employeeDetails(clin:str = None, location:str = None) -> pd.DataFrame:
-	regionEmployee = time.byEmployee(clin=clin, location=location)
-
-	# drop columns that are not necessary for Approvals
-	regionEmployee.drop(columns=[
-		'State',
-		'Holiday',
-		'Vacation',
-		'Bereavement',
-		'HoursReg',
-		'HoursOT'
-	], inplace=True)
-
-	# rename columns for clarity
-	regionEmployee.rename(columns={
-		'EmployeeName': 'Name',
-		'On-callOT': 'On-call OT',
-		'ScheduledOT': 'Sched OT',
-		'UnscheduledOT': 'Unschd OT',
-		'LocalHoliday': 'Local Hol',
-		'HoursTotal': 'Subtotal'
-	}, inplace=True)
-
-	return regionEmployee
-
 if __name__ == '__main__':
 	import sys
 
@@ -118,17 +57,17 @@ if __name__ == '__main__':
 
 		print('region:', region)
 
-		byDate = dateDetails(clin=clin)
-		byEmployee = employeeDetails(clin=clin)
+		# byDate = time.dateDetails(clin=clin)
+		# byEmployee = time.employeeDetails(clin=clin)
 		
 		with pd.ExcelWriter(outputFile) as writer:
 			for country in sorted(locationInfo[clin]):
 				print('country:', country)
 
-				byEmployee = employeeDetails(clin=clin, location=country)
+				byEmployee = time.employeeDetails(clin=clin, location=country)
 				byEmployee.to_excel(writer, sheet_name=f'Hours-{country}', startrow=0, startcol=0, header=True, index=False)
 
-				byDate = dateDetails(clin=clin, location=country)
+				byDate = time.dateDetails(clin=clin, location=country)
 				byDate.to_excel(writer, sheet_name=f'Details-{country}', startrow=0, startcol=0, header=True, index=False)
 
 		workbook = load_workbook(outputFile)
