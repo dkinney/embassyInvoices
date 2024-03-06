@@ -37,7 +37,7 @@ if __name__ == '__main__':
 	import sys
 
 	if len(sys.argv) < 2:
-		print(f'Usage: {sys.argv[0]} <billing activity file>')
+		print(f'Usage: {sys.argv[0]} <activity file>')
 		sys.exit(1)
 
 	filename = sys.argv[1]
@@ -50,9 +50,9 @@ if __name__ == '__main__':
 	locationInfo = time.locationsByCLIN()
 
 	for clin in locationInfo.keys():
-		reportType = 'HoursApproval'
+		prefix = config.data['filenamePrefixes']['approvals']
 		region = Regions[clin]
-		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
+		pattern = f'{prefix}-{region}-{startYear}-{startMonth}'
 		outputFile = f'{pattern}.xlsx'
 		
 		with pd.ExcelWriter(outputFile) as writer:

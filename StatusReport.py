@@ -36,7 +36,7 @@ if __name__ == '__main__':
 	invoiceNumberValue = config.data['nextInvoiceNumber']
 
 	for clin in locationInfo.keys():
-		reportType = 'HoursStatus'
+		reportType = config.data['filenamePrefixes']['status']
 		region = Regions[clin]
 		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
 		outputFile = f'{pattern}.xlsx'

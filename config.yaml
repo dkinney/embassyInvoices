@@ -1,3 +1,8 @@
+filenamePrefixes: 
+  status: 'Status'
+  approvals: 'Approvals'
+  laborInvoices: 'Labor'
+  postInvoices: 'Post'
 ach:
   account: 'Account #: 299912421028'
   bank: Wells Fargo
@@ -47,7 +52,7 @@ laborHeaders:
   rate: Rate
   total: Amount
   type: Name
-nextInvoiceNumber: 37
+nextInvoiceNumber: 55
 paymentTerms:
   line1: Net 30
   line2: 'Late Payment Fee: 1.5% per month'

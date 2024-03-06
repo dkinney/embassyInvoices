@@ -53,8 +53,8 @@ if __name__ == '__main__':
 		region = Regions[clin]
 		invoiceData = labor.invoiceData[clin]
 
-		reportType = 'Labor'
-		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
+		prefix = config.data['filenamePrefixes']['laborInvoices']
+		pattern = f'{prefix}-{region}-{startYear}-{startMonth}'
 		outputFile = f'{pattern}.xlsx'
 
 		sheetInfo = {}
