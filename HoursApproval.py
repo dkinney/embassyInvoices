@@ -54,16 +54,9 @@ if __name__ == '__main__':
 		region = Regions[clin]
 		pattern = f'{reportType}-{region}-{startYear}-{startMonth}'
 		outputFile = f'{pattern}.xlsx'
-
-		print('region:', region)
-
-		# byDate = time.dateDetails(clin=clin)
-		# byEmployee = time.employeeDetails(clin=clin)
 		
 		with pd.ExcelWriter(outputFile) as writer:
 			for country in sorted(locationInfo[clin]):
-				print('country:', country)
-
 				byEmployee = time.employeeDetails(clin=clin, location=country)
 				byEmployee.to_excel(writer, sheet_name=f'Hours-{country}', startrow=0, startcol=0, header=True, index=False)
 

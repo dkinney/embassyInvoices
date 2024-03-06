@@ -50,7 +50,6 @@ if __name__ == '__main__':
 	invoiceNumberValue = config.data['nextInvoiceNumber']
 
 	for clin in locationInfo.keys():
-		print(f'Processing CLIN: {clin}')
 		region = Regions[clin]
 		invoiceData = labor.invoiceData[clin]
 
