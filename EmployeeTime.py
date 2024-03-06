@@ -689,6 +689,65 @@ class EmployeeTime:
 
 		return(pivot)
 	
+	def dateDetails(self, clin:str = None, location:str = None) -> pd.DataFrame:
+		regionDate = self.statusByDate(clin=clin, location=location)
+		regionDate.drop(columns=['PostName'], inplace=True)
+		notApproved = regionDate['State'].ne('Approved')
+
+		if notApproved.any():
+			print(f'Warning: {notApproved.sum()} hours not approved for {region} CLIN {clin}')
+			print(regionDate.loc[notApproved])
+
+		regionDate.sort_values(['EmployeeName', 'Date'], ascending=[True, True], inplace=True)
+
+		# drop columns that are not necessary for Approvals
+		regionDate.drop(columns=[
+			'RoleID',
+			'State',
+			'Holiday',
+			'Vacation',
+			'Bereavement',
+			'HoursReg',
+			'HoursOT'
+		], inplace=True)
+
+		# rename columns for clarity
+		regionDate.rename(columns={
+			'EmployeeName': 'Name',
+			'On-callOT': 'On-call OT',
+			'ScheduledOT': 'Sched OT',
+			'UnscheduledOT': 'Unschd OT',
+			'LocalHoliday': 'Local Hol',
+			'HoursTotal': 'Subtotal'
+		}, inplace=True)
+
+		return regionDate
+
+	def employeeDetails(self, clin:str = None, location:str = None) -> pd.DataFrame:
+		regionEmployee = self.byEmployee(clin=clin, location=location)
+
+		# drop columns that are not necessary for Approvals
+		regionEmployee.drop(columns=[
+			'State',
+			'Holiday',
+			'Vacation',
+			'Bereavement',
+			'HoursReg',
+			'HoursOT'
+		], inplace=True)
+
+		# rename columns for clarity
+		regionEmployee.rename(columns={
+			'EmployeeName': 'Name',
+			'On-callOT': 'On-call OT',
+			'ScheduledOT': 'Sched OT',
+			'UnscheduledOT': 'Unschd OT',
+			'LocalHoliday': 'Local Hol',
+			'HoursTotal': 'Subtotal'
+		}, inplace=True)
+
+		return regionEmployee
+	
 def getUniquifier(pattern, type=None, region=None, year=None, monthName=None):
 	# look for previous instances of the status file
 	patternValues = re.findall(r'(.*)-(.*)-(.*)-(.*)', pattern)
