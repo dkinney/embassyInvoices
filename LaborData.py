@@ -135,6 +135,7 @@ class LaborData:
 				##########################################################################
 				# Detail for hours report
 				##########################################################################
+				# TODO: this is not used right now - the Status and Approval reports access time directly
 				hoursSummary = time.groupedForHoursReport(clin=clin, location=location)
 				# print(f'hoursSummary: {location}')
 				# print(hoursSummary)
