@@ -90,7 +90,7 @@ if __name__ == '__main__':
 					'invoiceNumber': invoiceNumber,
 					'taskOrder': f'Labor-{locationName}',
 					'billingPeriod': billingPeriod,
-					'invoiceAmount': 0,
+					'invoiceAmount': summary['Amount'].sum(),
 					'rowsToSum': rowsToSum
 				}
 
