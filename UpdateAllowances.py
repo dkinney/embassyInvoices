@@ -1,4 +1,4 @@
-# download the post hazard reports from the state department website
+# download the allowance reports from the state department website
 
 import requests
 import pandas as pd
@@ -88,7 +88,7 @@ def getPreviousRateDates(countryCode=None, postCode=None):
     
     return previous
 
-def getPostHazardData(countryCode=None, postCode=None, effectiveDate=None) -> pd.DataFrame:
+def getAllowancesData(countryCode=None, postCode=None, effectiveDate=None) -> pd.DataFrame:
     if countryCode is None:
         # print(f'Country Code is required')
         return None
@@ -121,7 +121,7 @@ def getPostHazardData(countryCode=None, postCode=None, effectiveDate=None) -> pd
     
     # df has the table with the relevant information
     # name the columns to make it easier to reference them
-    df.columns = ['PostName', 'COLA', 'PostingRate', 'TransferZone', 'Footnote', 'HazardRate', 'EducationAllowance', 'LivingAllowance', 'ReportingSchedule']
+    df.columns = ['PostName', 'COLA', 'PostingRate', 'TransferZone', 'Footnote', 'DangerRate', 'EducationAllowance', 'LivingAllowance', 'ReportingSchedule']
     df = df.fillna(0)
 
     # the effective date is not in the table, so it needs to be added
@@ -135,7 +135,7 @@ def getPostHazardData(countryCode=None, postCode=None, effectiveDate=None) -> pd
 
     df['EffectiveDate'] = effectiveDate
 
-    df = df[['EffectiveDate', 'PostName', 'PostingRate', 'HazardRate']]
+    df = df[['EffectiveDate', 'PostName', 'PostingRate', 'DangerRate']]
     return df
 
 # main function
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     ratesData = None
     earliestRateData = pd.to_datetime('2023-01-01')
 
-    ratesFile = sys.argv[1] if len(sys.argv) > 1 else 'data/PostHazardRates.csv'
+    ratesFile = sys.argv[1] if len(sys.argv) > 1 else 'data/AllowanceRates.csv'
 
     # load existing data if the file exists
     if os.path.exists(ratesFile):
@@ -167,7 +167,7 @@ if __name__ == '__main__':
         # is this the first time we are getting data for any site?
         if ratesData is None:
             print(f'Getting data for {site}')
-            ratesData = getPostHazardData(countryCode, postCode)
+            ratesData = getAllowancesData(countryCode, postCode)
             continue
 
         siteData = ratesData.loc[ratesData['PostName'] == site] if ratesData is not None else None
@@ -175,7 +175,7 @@ if __name__ == '__main__':
         if len(siteData) < 2:
             # force a second data point to be added to capture the range of dates
             print(f'Getting data for {site}')
-            df = getPostHazardData(countryCode, postCode)
+            df = getAllowancesData(countryCode, postCode)
             ratesData = pd.concat([ratesData, df], ignore_index=True)
             siteData = ratesData.loc[ratesData['PostName'] == site]
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
         if newest.empty:
             print(f'No data found for {site}')
-            df = getPostHazardData(countryCode, postCode)
+            df = getAllowancesData(countryCode, postCode)
             print(df)
             ratesData = pd.concat([ratesData, df], ignore_index=True)
 
@@ -194,7 +194,7 @@ if __name__ == '__main__':
 
             if nowDatetime > newestDate:
                 print(f'Getting data for {site}')
-                df = getPostHazardData(countryCode, postCode)
+                df = getAllowancesData(countryCode, postCode)
 
                 if df is not None:
                     comparison = np.where(df.values == newest.values, True, False)
@@ -221,7 +221,7 @@ if __name__ == '__main__':
             if len(siteData) < 2:
                 # force a second data point to be added to capture the range of dates
                 print(f'Getting data for {site}')
-                df = getPostHazardData(countryCode, postCode)
+                df = getAllowancesData(countryCode, postCode)
                 ratesData = pd.concat([ratesData, df], ignore_index=True)
                 siteData = ratesData.loc[ratesData['PostName'] == site]
 
@@ -233,7 +233,7 @@ if __name__ == '__main__':
 
             if oldest.empty:
                 print(f'No data found for {site}')
-                df = getPostHazardData(countryCode, postCode, date)
+                df = getAllowancesData(countryCode, postCode, date)
                 ratesData = pd.concat([ratesData, df], ignore_index=True)
             else:
                 oldestIndex = oldest.index[0]
@@ -241,7 +241,7 @@ if __name__ == '__main__':
                 if datetime <= newestDate and datetime >= oldestDate:
                     pass
                 else:
-                    df = getPostHazardData(countryCode, postCode, date)
+                    df = getAllowancesData(countryCode, postCode, date)
 
                     if df is not None:
                         dateFormatted = pd.to_datetime(date).strftime('%Y-%m-%d')

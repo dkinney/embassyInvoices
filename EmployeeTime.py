@@ -192,7 +192,7 @@ class EmployeeTime:
 		joined['RoleID'] = joined['RoleID'].str.replace('X', baseYear)
 		
 		# reorder the columns to be more useful
-		joined = joined[['Date', 'CLIN', 'Region', 'Country', 'PostName', 'RoleID', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'State', 'Rate', 'HourlyRate', 'PostingRate', 'HazardRate']]
+		joined = joined[['Date', 'CLIN', 'Region', 'Country', 'PostName', 'RoleID', 'Category', 'Description', 'EmployeeName', 'TaskName', 'Hours', 'State', 'Rate', 'HourlyRate', 'PostingRate', 'DangerRate']]
 	
 		self.data = joined
 
@@ -205,11 +205,11 @@ class EmployeeTime:
 		if location is not None:
 			df = df.loc[df['Country'] == location]
 
-		grouped = df.groupby(['Date', 'CLIN', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName', 'TaskName', 'Rate', 'HourlyRate', 'PostingRate', 'HazardRate'], as_index=False).agg({'Hours': 'sum'})
+		grouped = df.groupby(['Date', 'CLIN', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName', 'TaskName', 'Rate', 'HourlyRate', 'PostingRate', 'DangerRate'], as_index=False).agg({'Hours': 'sum'})
 
 		pivot = grouped.pivot_table(index=[
 			'Date', 'CLIN', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName', 
-			'Rate', 'HourlyRate', 'PostingRate', 'HazardRate'
+			'Rate', 'HourlyRate', 'PostingRate', 'DangerRate'
 		], columns='TaskName', values='Hours').reset_index()
 
 		pivot.sort_values(['EmployeeName'], ascending=[True], inplace=True)
@@ -225,7 +225,7 @@ class EmployeeTime:
 		pivot['HoursTotal'] = pivot['HoursReg'] + pivot['HoursOT']
 		pivot['RegularWages'] = pivot['Regular'] * pivot['HourlyRate'] # only use "Regular" hours for posting, not OT nor other type of regular hours
 		pivot['Posting'] = pivot['RegularWages'] * pivot['PostingRate']
-		pivot['Hazard'] = pivot['RegularWages'] * pivot['HazardRate']
+		pivot['Danger'] = pivot['RegularWages'] * pivot['DangerRate']
 
 		pivot = pivot[[
 			'Date', 'CLIN', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName', 
@@ -234,7 +234,7 @@ class EmployeeTime:
 			'HoursReg', 'HoursOT', 'HoursTotal',
 			'HourlyRate', 'RegularWages', 
 			'PostingRate', 'Posting', 
-			'HazardRate', 'Hazard'
+			'DangerRate', 'Danger'
 		]]
 
 		# pivot.sort_values(['Date', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName'], inplace=True)
@@ -321,22 +321,22 @@ class EmployeeTime:
 		posts.rename(columns={'Posting': 'Amount'}, inplace=True)
 		posts = posts[['CLIN', 'Country', 'Type', 'Amount', 'G&A', 'Total']]
 
-		hazards = costDetail.groupby(['Country', 'PostName'], as_index=False).agg({'Hazard': 'sum'})
+		dangers = costDetail.groupby(['Country', 'PostName'], as_index=False).agg({'Danger': 'sum'})
 
-		hazards['CLIN'] = '208'
-		hazards['Type'] = 'Hazard'
-		hazards['G&A'] = hazards['Hazard'] * upchargeRate
-		hazards['Total'] = hazards['Hazard'] + hazards['G&A']
-		hazards.rename(columns={'Hazard': 'Amount'}, inplace=True)
-		hazards = hazards[['CLIN', 'Country', 'Type', 'Amount', 'G&A', 'Total']]
+		dangers['CLIN'] = '208'
+		dangers['Type'] = 'Danger'
+		dangers['G&A'] = dangers['Danger'] * upchargeRate
+		dangers['Total'] = dangers['Danger'] + dangers['G&A']
+		dangers.rename(columns={'Danger': 'Amount'}, inplace=True)
+		dangers = dangers[['CLIN', 'Country', 'Type', 'Amount', 'G&A', 'Total']]
 
-		costs = pd.concat([posts, hazards])
+		costs = pd.concat([posts, dangers])
 		costs = costs.loc[costs['Total'] > 0]
 		costs.sort_values(['Country'], inplace=True)
 
 		return costs
 	
-	def postSummaryByCity(self, clin=None):
+	def postSummaryByPostName(self, clin=None):
 		costDetail = self.details()
 
 		if clin is not None:
@@ -345,18 +345,17 @@ class EmployeeTime:
 		summary = costDetail.groupby(['Country', 'PostName'], as_index=False).agg({'Posting': 'sum'})
 		return summary
 
-	def hazardSummaryByCity(self, clin=None):
+	def dangerPaySummaryByPostName(self, clin=None):
 		costDetail = self.details()
 
 		if clin is not None:
 			costDetail = costDetail.loc[costDetail['CLIN'] == clin]
 
-		summary = costDetail.groupby(['Country', 'PostName'], as_index=False).agg({'Hazard': 'sum'})
+		summary = costDetail.groupby(['Country', 'PostName'], as_index=False).agg({'Danger': 'sum'})
 		return summary
 
 	def groupedForHoursReport(self, clin=None, location=None):
 		data = self.data.copy()
-
 
 		detail = self.data.copy()
 
@@ -372,100 +371,6 @@ class EmployeeTime:
 		detail.sort_values(['RoleID', 'EmployeeName', 'Description'], ascending=[True, True, False], inplace=True)
 
 		return detail
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		details = data.loc[data['CLIN'] == clin]
-		details = details.loc[data['Country'] == location]
-
-		print(f'details: for {clin}, {location}: {details.PostName.unique()}')
-
-		print(details.info())
-
-		grouped = details.groupby(['Date', 'EmployeeName', 'TaskName'], as_index=False).agg({'Hours': 'sum'})
-		pivot = grouped.pivot_table(index=['Date', 'EmployeeName'], columns='TaskName', values='Hours').reset_index()
-
-		# fill in missing columns if they don't already exist
-		for taskName in TaskNames.values():
-			if ('Hours', taskName) not in pivot.columns:
-				pivot[('Hours', taskName)] = 0.0
-
-
-		# keep the existing columns but pivot the TaskName into columns
-		pivot = details.pivot_table(index=[
-			'Date', 'CLIN', 'Country', 'PostName', 
-			'RoleID', 'Category', 'EmployeeName', 
-			'Rate', 'HourlyRate', 'PostingRate', 'HazardRate'
-		], columns=['TaskName'], values=['Hours'], aggfunc='sum', fill_value=0).reset_index()
-
-		print('pivot: ', pivot.columns)
-		print(f"pivot: for {clin}, {location}: {pivot[('PostName', '')].unique()}")
-
-		print(pivot.info())
-		print(pivot)
-
-		# # fill in missing columns if they don't already exist
-		# for taskName in TaskNames.values():
-		# 	if ('Hours', taskName) not in pivot.columns:
-		# 		pivot[('Hours', taskName)] = 0.0
-
-		# # print(f'columns: {pivot.columns}')
-
-		# # # reorder the columns
-		# # pivot = pivot[[
-		# # 	'Date', 'CLIN', 'Country', 'PostName',
-		# # 	'RoleID', 'Category', 'EmployeeName',
-		# # 	'Rate', 'HourlyRate', 'PostingRate', 'HazardRate',
-		# # 	('Hours', 'Regular'), ('Hours', 'LocalHoliday'), ('Hours', 'Holiday'), ('Hours', 'Vacation'), ('Hours', 'Admin'),
-		# # 	('Hours', 'Overtime'), ('Hours', 'On-callOT'), ('Hours', 'ScheduledOT'), ('Hours', 'UnscheduledOT')
-		# # ]]
-
-		# # rename the multi-indexed columns to be more readable
-		# pivot.rename(columns={
-		# 	('Hours', 'Regular'): 'Regular',
-		# 	('Hours', 'LocalHoliday'): 'LocalHoliday',
-		# 	('Hours', 'Holiday'): 'Holiday',
-		# 	('Hours', 'Vacation'): 'Vacation',
-		# 	('Hours', 'Admin'): 'Admin',
-		# 	('Hours', 'Overtime'): 'Overtime',
-		# 	('Hours', 'On-callOT'): 'On-callOT',
-		# 	('Hours', 'ScheduledOT'): 'ScheduledOT',
-		# 	('Hours', 'UnscheduledOT'): 'UnscheduledOT'
-		# }, inplace=True)
-		
-		# print(f'pivot: for {clin}, {location}: {pivot.PostName.unique()}')
-		# print(pivot.info())
-		
-		# pivot['Subtotal'] = pivot['Regular'] + pivot['On-callOT'] + pivot['ScheduledOT'] + pivot['UnscheduledOT'] + pivot['Overtime'] + pivot['LocalHoliday'] + pivot['Admin']
-		# pivot.sort_values(['PostName', 'RoleID', 'EmployeeName'], inplace=True)
-
-		# pivot.rename(columns={
-		# 	'RoleID': 'CLIN', 
-		# 	'EmployeeName': 'Name',
-		# 	'On-callOT': 'On-call OT',
-		# 	'ScheduledOT': 'Sched OT',
-		# 	'UnscheduledOT': 'Unschd OT',
-		# 	'LocalHoliday': 'Local Hol'
-		# }, inplace=True)
-
-		# print(f'debug groupedForHoursReport: for {clin}, {location}: {pivot.PostName.unique()}')
-		
-		return pivot
 	
 	def groupedForDetailsReport(self, clin=None, location=None):
 		details = self.details(clin=clin, location=location)
@@ -494,8 +399,8 @@ class EmployeeTime:
 			'RegularWages': 'sum',
 			'PostingRate': 'first',
 			'Posting': 'sum',
-			'HazardRate': 'first',
-			'Hazard': 'sum'
+			'DangerRate': 'first',
+			'Danger': 'sum'
 		})
 
 		return grouped
@@ -532,16 +437,16 @@ class EmployeeTime:
 			'HourlyRate': 'Rate',
 			'RegularWages': 'Regular Wages',
 			'PostingRate': 'Post Rate',
-			'Posting': 'Post'
+			'Posting': 'Post Pay'
 		}, inplace=True)
 
 		return grouped
 	
-	def groupedForHazardReport(self, clin=None, location=None):
+	def groupedForDangerReport(self, clin=None, location=None):
 		details = self.details(clin=clin, location=location)
 		details.drop(columns=['CLIN'], inplace=True)
 
-		# print(f'debug groupedForHazardReport: for {clin}, {location}: {details.PostName.unique()}')
+		# print(f'debug groupedForDangerReport: for {clin}, {location}: {details.PostName.unique()}')
 
 		grouped = details.groupby(['RoleID', 'EmployeeName'], as_index=False).agg({
 			'Country': 'first',
@@ -549,15 +454,15 @@ class EmployeeTime:
 			'Regular': 'sum',
 			'HourlyRate': 'first',
 			'RegularWages': 'sum',
-			'HazardRate': 'first',
-			'Hazard': 'sum'
+			'DangerRate': 'first',
+			'Danger': 'sum'
 		})
 
 		# reorder the columns to be more useful
 		grouped = grouped[[
 			'PostName', 'RoleID', 'EmployeeName',
 			'Regular', 'HourlyRate', 'RegularWages', 
-			'HazardRate', 'Hazard'
+			'DangerRate', 'Danger'
 		]]
 
 		# rename columns to be more readable
@@ -566,11 +471,12 @@ class EmployeeTime:
 			'EmployeeName': 'Name',
 			'HourlyRate': 'Rate',
 			'RegularWages': 'Regular Wages',
-			'HazardRate': 'Hazard Rate'
+			'DangerRate': 'Danger Rate',
+			'Danger': 'Danger Pay'
 		}, inplace=True)
 
-		# drop rows where the Hazard is zero
-		grouped = grouped.loc[grouped['Hazard'] > 0]
+		# drop rows where the Danger is zero
+		grouped = grouped.loc[grouped['Danger Pay'] > 0]
 
 		return grouped
 	

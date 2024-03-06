@@ -65,21 +65,21 @@ if __name__ == '__main__':
 			sheetName = f'Post-{region}'
 
 			costs = time.postByCountry(clin=clin)
-			post = time.postSummaryByCity(clin=clin)
+			post = time.postSummaryByPostName(clin=clin)
 			numPostRows = post.shape[0]
 
 			postData = time.groupedForPostReport(clin=clin)
 			numPostDetailRows = postData.shape[0]
 			invoiceData.addPostDetail(postData)
 
-			hazard = time.hazardSummaryByCity(clin=clin)
-			numHazardRows = hazard.shape[0]
+			dangerPay = time.dangerPaySummaryByPostName(clin=clin)
+			numDangerPayRows = dangerPay.shape[0]
 
-			hazardData = time.groupedForHazardReport(clin=clin)
-			invoiceData.addHazardDetail(hazardData)
+			dangerPayData = time.groupedForDangerReport(clin=clin)
+			invoiceData.addDangerPayDetail(dangerPayData)
 
-			hazardDetails = time.groupedForHazardReport(clin=clin)
-			numHazardDetailRows = hazardDetails.shape[0]
+			dangerPayDetails = time.groupedForDangerReport(clin=clin)
+			numDangerPayDetailRows = dangerPayDetails.shape[0]
 
 			invoiceAmount = costs['Total'].sum()
 
@@ -109,8 +109,8 @@ if __name__ == '__main__':
 					'rowsToSum': rowsToSum, 
 					'postRows': numPostRows,
 					'postDetailRows': numPostDetailRows,
-					'hazardRows': numHazardRows,
-					'hazardDetailRows': numHazardDetailRows
+					'dangerPayRows': numDangerPayRows,
+					'dangerPayDetailRows': numDangerPayDetailRows
 				}
 
 				sheetInfo[sheetName] = invoiceDetail
@@ -119,10 +119,10 @@ if __name__ == '__main__':
 			postData.to_excel(writer, sheet_name=sheetName, startrow=firstRow, startcol=0, header=True, index=False)
 			post.to_excel(writer, sheet_name=sheetName, startrow=numPostDetailRows + firstRow + spaceToSummary, startcol=5, header=False, index=False)
 
-			if numHazardDetailRows > 0:
-				sheetName = f'Post-{region}-Hazard'
-				hazardDetails.to_excel(writer, sheet_name=sheetName, startrow=firstRow, startcol=0, header=True, index=False)
-				hazard.to_excel(writer, sheet_name=sheetName, startrow=numHazardDetailRows + firstRow + spaceToSummary, startcol=5, header=False, index=False)
+			if numDangerPayDetailRows > 0:
+				sheetName = f'Post-{region}-DangerPay'
+				dangerPayDetails.to_excel(writer, sheet_name=sheetName, startrow=firstRow, startcol=0, header=True, index=False)
+				dangerPay.to_excel(writer, sheet_name=sheetName, startrow=numDangerPayDetailRows + firstRow + spaceToSummary, startcol=5, header=False, index=False)
 				
 		workbook = load_workbook(outputFile)
 
@@ -139,10 +139,10 @@ if __name__ == '__main__':
 			postTitle = f'{region} Post {time.dateStart.strftime("%B")} {startYear}'
 			formatPostDetails(worksheet, postTitle, firstRow, info['postDetailRows'], spaceToSummary, info['postRows'])
 
-			if info['hazardDetailRows'] > 0:
-				detailSheetName = f'Post-{region}-Hazard'
+			if info['dangerPayDetailRows'] > 0:
+				detailSheetName = f'Post-{region}-DangerPay'
 				worksheet = workbook[detailSheetName]
-				postTitle = f'{region} Hazard {time.dateStart.strftime("%B")} {startYear}'
-				formatPostDetails(worksheet, postTitle, firstRow, info['hazardDetailRows'], spaceToSummary, info['hazardRows'])
+				postTitle = f'{region} Danger Pay {time.dateStart.strftime("%B")} {startYear}'
+				formatPostDetails(worksheet, postTitle, firstRow, info['dangerPayDetailRows'], spaceToSummary, info['dangerPayRows'])
 
 		workbook.save(outputFile)

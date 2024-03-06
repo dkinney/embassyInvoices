@@ -88,13 +88,6 @@ if __name__ == '__main__':
 	inputFilename = sys.argv[1] if len(sys.argv) > 1 else None
 	employees = EmployeeInfo(inputFilename, verbose=True)
 
-	# load PostHazard rates
-	# postHazard = pd.read_csv('data/PostHazardRates.csv')
-	# postHazard['EffectiveDate'] = pd.to_datetime(postHazard['EffectiveDate'])
-	# postHazard.sort_values(by='EffectiveDate', inplace=False)
-	# print('\nPostHazard Rates:')
-	# print(postHazard)
-
 	# load BillingRates
 	from BillingRates import BillingRates
 	billingRates = BillingRates(verbose=False)
@@ -102,26 +95,4 @@ if __name__ == '__main__':
 	employees.joinWith(billingRates)
 	debug = employees.data.loc[employees.data['EmployeeID'] == 'E11956']
 	print(debug)
-	print(debug[['EmployeeName', 'EmployeeID', 'PostName', 'PostingRate', 'HazardRate']])
-
-	# billingRates.joinWith(employees)
-
-	# debug = billingRates.data.loc[billingRates.data['EmployeeID'] == '11956']
-	# print(debug)
-
-	# # reordering the columns
-	# billingRates.data = billingRates.data[[
-	# 	'EmployeeName', 'EmployeeID', 'EffectiveDate',
-	# 	'Title', 'HourlyRate', 'HourlyRateOT', 
-	# 	'Country', 'PostName', 'PostingRate', 'HazardRate', 
-	# 	'CLIN', 'RoleID', 'Category', 'BillRateReg', 'BillRateOT'
-	# ]]
-
-	# outputFile = 'data/EmployeeInfo.csv'
-
-	# # Save the data to a csv file
-	# billingRates.data.to_csv(outputFile, index=False)
-
-	
-	# with pd.ExcelWriter(outputFile) as writer:
-	# 	billingRates.data.to_excel(writer, sheet_name='Info', startrow=0, startcol=0, header=True, index=False)
+	print(debug[['EmployeeName', 'EmployeeID', 'PostName', 'PostingRate', 'DangerRate']])

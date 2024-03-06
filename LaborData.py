@@ -53,14 +53,6 @@ class LocationDetail:
 		self.laborHours += dataframe['Hours'].sum()
 		self.laborAmount += dataframe['Amount'].sum()
 
-	# def addPostDetails(self, dataframe: pd.DataFrame):
-	# 	self.postDetails.append(dataframe)
-	# 	self.postAmount += dataframe['Post'].sum()
-
-	# def addHazardDetails(self, dataframe: pd.DataFrame):
-	# 	self.hazardDetails.append(dataframe)
-	# 	self.hazardAmount += dataframe['Hazard'].sum()
-
 	def addHoursSummary(self, dataframe: pd.DataFrame):
 		self.hoursSummary.append(dataframe)
 	
@@ -75,7 +67,7 @@ class InvoiceData:
 		self.amount = 0
 
 		self.postDetails: pd.DataFrame = None
-		self.hazardDetails: pd.DataFrame = None
+		self.dangerPayDetails: pd.DataFrame = None
 
 	def retrieveLocation(self, locationName:str) -> LocationDetail:
 		try:
@@ -93,8 +85,8 @@ class InvoiceData:
 	def addPostDetail(self, dataframe: pd.DataFrame):
 		self.postDetails = dataframe
 	
-	def addHazardDetail(self, dataframe: pd.DataFrame):
-		self.hazardDetails = dataframe
+	def addDangerPayDetail(self, dataframe: pd.DataFrame):
+		self.dangerPayDetails = dataframe
 
 	def addHoursSummary(self, locationName: str, dataframe: pd.DataFrame):
 		location = self.retrieveLocation(locationName)
@@ -157,8 +149,8 @@ class LaborData:
 			postData = time.groupedForPostReport(clin=clin)
 			invoiceData.addPostDetail(postData)
 
-			hazardData = time.groupedForHazardReport(clin=clin)
-			invoiceData.addHazardDetail(hazardData)
+			dangerPayData = time.groupedForDangerReport(clin=clin)
+			invoiceData.addDangerPayDetail(dangerPayData)
 
 			self.invoiceData[clin] = invoiceData
 
@@ -203,7 +195,7 @@ if __name__ == '__main__':
 	pivot = hours.pivot_table(index=[
 		'Date', 'CLIN', 'Country', 'PostName', 
 		'RoleID', 'Category', 'EmployeeName', 
-		'Rate', 'HourlyRate', 'PostingRate', 'HazardRate'
+		'Rate', 'HourlyRate', 'PostingRate', 'DangerRate'
 	], columns=['TaskName'], values=['Hours'], aggfunc='sum', fill_value=0).reset_index()
 
 
@@ -214,36 +206,3 @@ if __name__ == '__main__':
 	hoursSummary = labor.time.groupedForHoursReport(clin=clin, location=country)
 
 	print(f'hoursSummary: {country}\n{hoursSummary}')
-
-	# print(f'hoursSummary: {country}, {hoursSummary.PostName.unique()}')
-	# print(hoursSummary)
-
-	exit()
-
-	for clin in sorted(labor.invoiceData.keys()):
-		invoiceData = labor.invoiceData[clin]
-
-		print(f'CLIN: {clin}')
-		print(f'Locations: {sorted(invoiceData.locationDetails.keys())}')
-
-		for locationName in sorted(invoiceData.locationDetails.keys()):
-			invoiceDetails = invoiceData.locationDetails[locationName]
-
-			# data = labor.time.groupedForInvoicing(clin=clin, location=locationName)
-			# print(f'Location: {locationName}')
-			# print(data)
-			# print('\n')
-
-		# print('\n-------------------------')
-		# print(f'Post Details for {clin}: {len(invoiceData.postDetails)}')
-		# print(invoiceData.postDetails)
-		# summary = invoiceData.postDetails.groupby(['PostName']).agg({'Post': 'sum'}).reset_index()
-		# print(summary)
-		# print('---')
-
-		# print('\n-------------------------')
-		# print(f'Hazard Details for {clin}: {len(invoiceData.hazardDetails)}')
-		# print(invoiceData.hazardDetails)
-		# summary = invoiceData.hazardDetails.groupby(['PostName']).agg({'Hazard': 'sum'}).reset_index()
-		# print(summary)
-		# print('---')
