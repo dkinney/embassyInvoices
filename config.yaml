@@ -3,6 +3,8 @@ filenamePrefixes:
   approvals: 'Approvals'
   laborInvoices: 'Labor'
   postInvoices: 'Post'
+  revisedLabor: 'RevisedLabor'
+  revisedPost: 'RevisedPost'
 ach:
   account: 'Account #: 299912421028'
   bank: Wells Fargo
