@@ -237,10 +237,6 @@ class EmployeeTime:
 			'DangerRate', 'Danger'
 		]]
 
-		# pivot.sort_values(['Date', 'Country', 'PostName', 'RoleID', 'Category', 'EmployeeName'], inplace=True)
-
-		# print(f'debug details: for {clin}, {location}: {pivot.PostName.unique()}')
-
 		return pivot
 	
 	def isIn(self, employeeNumberList):
