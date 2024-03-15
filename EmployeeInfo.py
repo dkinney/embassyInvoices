@@ -4,56 +4,46 @@ class EmployeeInfo:
 	def __init__(self, filename=None, verbose=False):
 		self.data = None	# a dataframe containing information loaded from a file and cleaned
 
-		if filename is None:
-			self.loadData('data/EmployeeInfo.xlsx', verbose)
-		else:
-			self.loadData(filename, verbose)
+		filename = filename if filename is not None else 'data/EmployeeInfo.xlsx'
 
-	def checkMissing(self, df: pd.DataFrame):
-		self.missingNumber = df.loc[df['EmployeeName'].notna() & df['EmployeeID'].isna()]
-		self.missingSubCLIN = df.loc[df['EmployeeName'].notna()  & df['EmployeeID'].notna() & df['SubCLIN'].isna()]
-
-		employeeSet = set()
-		employeeSet.update(self.missingSubCLIN['EmployeeID'].tolist())
-		self.employeesMissingData = list(employeeSet)
-
-	def describeMissing(self):
-		if len(self.missingNumber) > 0:
-			print(f"  Missing Number: {len(self.missingNumber)}")
-			print(self.missingNumber[['EmployeeName']])
-
-		if len(self.missingSubCLIN) > 0:
-			print(f"  Missing SubCLIN: {len(self.missingSubCLIN)}")
-			print(self.missingSubCLIN[['EmployeeName', 'EmployeeID']])
-
-	def loadData(self, filename, verbose=False):
 		# Define the data type will be used when reading in the data
 		# By default, it will try to make columns that only have numbers into numbers.
 		converters = {
-			'EmployeeName': str,
-			'EmployeeID': str,
-			'HourlyRateReg': float,
-			'HourlyRateOT': float,
-			'Location': str,
+			'Employee ID': str,
+			'Employee Name': str,
+			'Start Date': str,
+			'Seniority Date': str,
+			'Effective Date': str,
+			'HourlyRate': float,
+			'Role ID': str,
 			'Title': str,
-			'PostingRate': float,
-			'HazardRate': float
+			'Note': str
 		}
 	
 		df = pd.read_excel(filename, header=0, converters=converters)
+
+		# rename columns for internal usage
+		df.rename(columns={
+			'Employee ID': 'EmployeeID',
+			'Employee Name': 'EmployeeName',
+			'Start Date': 'StartDate',
+			'Seniority Date': 'SeniorityDate',
+			'Effective Date': 'EffectiveDate',
+			'Hourly Rate': 'HourlyRate',
+			'Role ID': 'RoleID'
+		}, inplace=True)
+
+		# strip whitespace from all string columns
 		df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
 		self.checkMissing(df)
 
-		# Ensure there are no duplicate rows
-		# TODO: Make this an error so that it can be highlighted to clean the input data.
-		df = df.drop_duplicates()
-
 		# drop any employee that does not have an EmployeeID
 		df = df.dropna(axis=0, how='any', subset=['EmployeeID'])
 
-		# strip whitespace from all string columns
-		df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+		# Ensure there are no duplicate rows
+		# TODO: group this according to 'Employee ID' and 'Effective Date'
+		df = df.drop_duplicates()
 
 		if verbose:
 			print(f'Loaded {len(df)} employees from {filename}')
@@ -61,42 +51,48 @@ class EmployeeInfo:
 
 		self.data = df
 
+	def checkMissing(self, df: pd.DataFrame):
+		self.missingNumber = df.loc[df['EmployeeName'].notna() & df['EmployeeID'].isna()]
+		self.missingRoleID = df.loc[df['EmployeeName'].notna()  & df['EmployeeID'].notna() & df['RoleID'].isna()]
+
+		employeeSet = set()
+		employeeSet.update(self.missingRoleID['EmployeeID'].tolist())
+		self.employeesMissingData = list(employeeSet)
+
+	def describeMissing(self):
+		if len(self.missingNumber) > 0:
+			print(f"  Missing Number: {len(self.missingNumber)}")
+			print(self.missingNumber[['EmployeeName']])
+
+		if len(self.missingRoleID) > 0:
+			print(f"  Missing RoleID: {len(self.missingRoleID)}")
+			print(self.missingRoleID[['EmployeeName', 'EmployeeID']])
+
+	def joinWith(self, billingRates):
+		if billingRates.data is None:
+			# nothing to do
+			return
+
+		joined = self.data.join(billingRates.data.set_index('RoleID'), on='RoleID', how='left', rsuffix='_rates')
+		self.data = joined
+
 # The following is only used when testing this module.
 # It expects a file in the parent directory for testing purposes only.
 
 if __name__ == '__main__':
 	import sys
+	from BillingRates import BillingRates
 
 	# By default, uses the file, "EmployeeInfo.xlsx" within the data directory
 	# unless a filename is provided as a command line argument.
 	inputFilename = sys.argv[1] if len(sys.argv) > 1 else None
-	employees = EmployeeInfo(inputFilename, verbose=False)
+	employees = EmployeeInfo(inputFilename, verbose=True)
 
+	# load BillingRates
 	from BillingRates import BillingRates
 	billingRates = BillingRates(verbose=False)
-	billingRates.joinWith(employees)
 
-	# reordering the columns
-	billingRates.data = billingRates.data[[
-		'EmployeeName', 'EmployeeID', 'EffectiveDate',
-		'Title', 'HourlyRateReg', 'HourlyRateOT', 
-		'Location', 'City', 'PostingRate', 'HazardRate', 
-		'CLIN', 'SubCLIN', 'Category', 'BillRateReg', 'BillRateOT'
-	]]
-
-	outputFile = 'Resolved Employee Info.xlsx'
-	with pd.ExcelWriter(outputFile) as writer:
-		billingRates.data.to_excel(writer, sheet_name='Info', startrow=0, startcol=0, header=True, index=False)
-
-	from openpyxl import load_workbook
-	from InvoiceStyles import styles
-	from InvoiceFormat import formatEmployeeInfo
-
-	workbook = load_workbook(outputFile)
-
-	for styleName in styles.keys():
-		workbook.add_named_style(styles[styleName])
-		
-	worksheet = workbook['Info']
-	formatEmployeeInfo(worksheet)
-	workbook.save(outputFile)
+	employees.joinWith(billingRates)
+	debug = employees.data.loc[employees.data['EmployeeID'] == 'E11956']
+	print(debug)
+	print(debug[['EmployeeName', 'EmployeeID', 'PostName', 'PostingRate', 'DangerRate']])

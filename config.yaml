@@ -1,0 +1,81 @@
+filenamePrefixes: 
+  status: 'Status'
+  approvals: 'Approvals'
+  laborInvoices: 'Labor'
+  postInvoices: 'Post'
+  revisedLabor: 'RevisedLabor'
+  revisedPost: 'RevisedPost'
+ach:
+  account: 'Account #: 299912421028'
+  bank: Wells Fargo
+  routing: 'Routing #: 121000248'
+address:
+  line1: MEC Energy Services
+  line2: 3949 Hwy 8, Suite 110
+  line3: New Town, ND 48763
+  line4: 'TIN: 753209819'
+  line5: null
+  line6: null
+approvers:
+  China:
+    COR: "Michael Okamura \u2013 Senior Facility Manager \u2013 EAP COR-B"
+    MES: "Christine Rosenquist \u2013 MES Resident Manager"
+  Hong Kong:
+    COR: "Michael Okamura \u2013 Senior Facility Manager \u2013 EAP COR-B"
+    MES: "Christine Rosenquist \u2013 MES Resident Manager"
+  Moldova:
+    COR: "Akram Elfeki - Senior Facility Manager \u2013 Moscow COR"
+    MES: "Kevin Carroll \u2013 MES Resident Manager"
+  NATO:
+    COR: "Robert Warner \u2013 DOS-COR-M"
+    MES: "Dustin Bergee \u2013 MES Resident Manager"
+  Russia:
+    COR: "Akram Elfeki - Senior Facility Manager \u2013 Moscow COR"
+    MES: "Kevin Carroll \u2013 MES Resident Manager"
+  Ukraine:
+    COR: "Akram Elfeki - Senior Facility Manager \u2013 Moscow COR"
+    MES: "Kevin Carroll \u2013 MES Resident Manager"
+  Vietnam:
+    COR: "Michael Okamura \u2013 Senior Facility Manager \u2013 EAP COR-B"
+    MES: "Christine Rosenquist \u2013 MES Resident Manager"
+baseYear: '0'
+billTo:
+  line1: IPP
+  line2: Global Financial Services Center
+  line3: P.O. Box 150008
+  line4: 'ATTN: Office of Claims'
+  line5: Charleston, SC 29415-5008
+  line6: 'Re: Helga Lumpkin'
+contractNumber: 19AQMM23C0047
+laborHeaders:
+  clin: CLIN
+  description: Category
+  quantity: Hours
+  rate: Rate
+  total: Amount
+  type: Name
+nextInvoiceNumber: 55
+paymentTerms:
+  line1: Net 30
+  line2: 'Late Payment Fee: 1.5% per month'
+postHeaders:
+  clin: CLIN
+  description: Location
+  quantity: Amount
+  rate: G&A
+  total: Total
+  type: Type
+questions:
+  line1: Joe Santorelli
+  line2: joe.santorelli@mandaree.com
+  line3: 478.714.0070
+regions:
+  Asia: '001'
+  Europe: '002'
+remitTo:
+  line1: Accounts Receivable
+  line2: MEC Energy Services
+  line3: 23808 Andrew Road, Unit 3
+  line4: Plainfield, IL 60585
+upchargeRate: 0.35
+version: 6

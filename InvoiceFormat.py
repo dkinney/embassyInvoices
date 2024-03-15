@@ -9,7 +9,11 @@ from openpyxl.styles import Border, Side, PatternFill, Alignment
 
 from InvoiceStyles import styles
 
-contractNumber = '19AQMM23C0047'
+from Config import Config
+config = Config()
+contractNumber = config.data['contractNumber']
+dataStyles = config.data['dataStyles']
+
 processingDate = datetime.datetime.now().strftime('%d %b %Y')
 
 thinSide = Side(style='thin', color="000000")
@@ -19,233 +23,6 @@ orange = PatternFill(start_color='FFA500', end_color='FFA500', fill_type='solid'
 gray = PatternFill(start_color='D3D3D3', end_color='D3D3D3', fill_type='solid')
 blue = PatternFill(start_color='21A7F2', end_color='21A7F2', fill_type='solid')
 lightBlue = PatternFill(start_color='DCE6F1', end_color='DCE6F1', fill_type='solid')
-
-dataStyles = {
-    'CLIN': {
-        'width': 10,
-        'style': 'defaultCell'
-    },
-    'SubCLIN': {
-        'width': 7,
-        'style': 'defaultCell'
-    },
-    'Description': {
-        'width': 25,
-        'style': 'defaultCell'
-    },
-    'Category': {
-        'width': 48,
-        'style': 'defaultCell'
-    },
-    'Title': {
-        'width': 28,
-        'style': 'defaultCell'
-    },
-    'Location': {
-        'width': 15,
-        'style': 'defaultCell'
-    },
-    'City': {
-        'width': 15,
-        'style': 'defaultCell'
-    },
-    'Name': {
-        'width': 18,
-        'style': 'defaultCell'
-    },
-    'State': {
-        'width': 10,
-        'style': 'defaultCell'
-    },
-    'Number': {
-        'width': 10,
-        'style': 'defaultCell'
-    },
-    'Hours': {
-        'width': 9,
-        'style': 'numberCell'
-    },
-    'Percentage': {
-        'width': 10,
-        'style': 'percentageCell'
-    },
-    'Regular Rate': {
-        'width': 12,
-        'style': 'currencyCell'
-    },
-    'Overtime Rate': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Regular': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Regular Hours': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'On-Call OT': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Scheduled OT': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Unscheduled OT': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Overtime': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Local Holiday': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Admin': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Subtotal': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Regular Wages': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Post Rate': {
-        'width': 12,
-        'style': 'percentageCell'
-    },
-    'Hazard Rate': {
-        'width': 12,
-        'style': 'percentageCell'
-    },
-    'Posting': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Hazard': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Upcharge': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Total': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Total Post': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Total Hazard': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Total Regular': {
-        'width': 20,
-        'style': 'currencyCell'
-    },
-    'Total Overtime': {
-        'width': 20,
-        'style': 'currencyCell'
-    },
-    'Total Billing': {
-        'width': 20,
-        'style': 'currencyCell'
-    },
-    'Wages': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Posting Pay': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Hazard Pay': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Date': {
-        'width': 15,
-        'style': 'dateCell'
-    },
-    'ContractID': {
-        'width': 20,
-        'style': 'defaultCell'
-    },
-    'Task ID': {
-        'width': 8,
-        'style': 'defaultCell'
-    },
-    'Task Name': {
-        'width': 12,
-        'style': 'defaultCell'
-    },
-    'Descr': {
-        'width': 54,
-        'style': 'defaultCell'
-    },
-    'EmbeddedAdmin': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'SummarySubCLIN': {
-        'width': 7,
-        'style': 'textCell'
-    },
-    'SummaryDescription': {
-        'width': 25,
-        'style': 'textCell'
-    },
-    'SummaryName': {
-        'width': 18,
-        'style': 'textCell'
-    },
-    'SummaryHours': {
-        'width': 12,
-        'style': 'numberCell'
-    },
-    'Rate': {
-        'width': 10,
-        'style': 'currencyCell'
-    },
-    'SummaryRate': {
-        'width': 8,
-        'style': 'currencyCell'
-    },
-    'SummaryTotal': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'InvoiceNumber': {
-        'width': 20,
-        'style': 'defaultCell'
-    },
-    'TaskOrder': {
-        'width': 15,
-        'style': 'defaultCell'
-    },
-    'InvoiceAmount': {
-        'width': 15,
-        'style': 'currencyCell'
-    },
-    'Filename': {
-        'width': 25,
-        'style': 'defaultCell'
-    },
-    'BillingPeriod': {
-        'width': 25,
-        'style': 'defaultCell'
-    },
-}
 
 def styleColumn(worksheet, column, type, rowStart = None, rowStop = None):
     start = 0 if rowStart is None else rowStart
@@ -367,56 +144,56 @@ def formatInvoiceTab(worksheet, sheetInfo):
     worksheet['E9'].style = 'invoiceValue'
 
     row = 3
-    worksheet['B' + str(row)] = 'MEC Energy Services'; row += 1
-    worksheet['B' + str(row)] = '3949 Hwy 8, Suite 110'; row += 1
-    worksheet['B' + str(row)] = 'New Town, ND 58763'; row += 1
-    worksheet['B' + str(row)] = 'TIN: 753209819'; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line1']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line2']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line3']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line4']; row += 1
 
     row += 4; toRow = row
     worksheet['A' + str(row)] = 'Bill To:'
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'IPP'; row += 1
-    worksheet['B' + str(row)] = 'Global Financial Services Center'; row += 1
-    worksheet['B' + str(row)] = 'P.O. Box 150008'; row += 1
-    worksheet['B' + str(row)] = 'ATTN: Office of Claims'; row += 1
-    worksheet['B' + str(row)] = 'Charleston, SC 29415-5008'; row += 1
-    worksheet['B' + str(row)] = 'Re: Helga Lumpkin'; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line1']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line2']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line3']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line4']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line5']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line6']; row += 1
 
     row += 1; instructionsRow = row
     worksheet['A' + str(row)] = 'ACH:'
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'Wells Fargo'; row += 1
+    worksheet['B' + str(row)] = config.data['ach']['bank']; row += 1
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'Routing #: 121000248'; row += 1
-    worksheet['B' + str(row)] = 'Account #: 299912421028'
+    worksheet['B' + str(row)] = config.data['ach']['routing']; row += 1
+    worksheet['B' + str(row)] = config.data['ach']['account']
 
     row = toRow
     worksheet['D' + str(row)] = 'Remit To:'
     worksheet['D' + str(row)].style = 'invoiceHeader'
-    worksheet['E' + str(row)] = 'Accounts Receivable'; row += 1
-    worksheet['E' + str(row)] = 'MEC Energy Services'; row += 1
-    worksheet['E' + str(row)] = '23808 Andrew Road, Unit 3'; row += 1
-    worksheet['E' + str(row)] = 'Plainfield, IL 60585'; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line1']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line2']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line3']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line4']; row += 1
 
     row = instructionsRow
     worksheet['D' + str(row)] = 'Invoice Questions:'
     worksheet['D' + str(row)].style = 'invoiceHeader'
-    worksheet['E' + str(row)] = 'Joe Santorelli'; row += 1
-    worksheet['E' + str(row)] = 'joe.santorelli@mandaree.com'; row += 1
-    worksheet['E' + str(row)] = '478.714.0070'; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line1']; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line2']; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line3']; row += 1
 
     row += 1
-    worksheet['A' + str(row)] = 'CLIN'
+    worksheet['A' + str(row)] = config.data['laborHeaders']['clin']
     worksheet['A' + str(row)].style = 'summaryTitle'
-    worksheet['B' + str(row)] = 'Category'
+    worksheet['B' + str(row)] = config.data['laborHeaders']['description']
     worksheet['B' + str(row)].style = 'summaryTitle'
-    worksheet['C' + str(row)] = 'Name'
+    worksheet['C' + str(row)] = config.data['laborHeaders']['type']
     worksheet['C' + str(row)].style = 'summaryTitle'
-    worksheet['D' + str(row)] = 'Hours'
+    worksheet['D' + str(row)] = config.data['laborHeaders']['quantity']
     worksheet['D' + str(row)].style = 'summaryTitle'
-    worksheet['E' + str(row)] = 'Rate'
+    worksheet['E' + str(row)] = config.data['laborHeaders']['rate']
     worksheet['E' + str(row)].style = 'summaryTitle'
-    worksheet['F' + str(row)] = 'Amount'
+    worksheet['F' + str(row)] = config.data['laborHeaders']['total']
     worksheet['F' + str(row)].style = 'summaryTitle'
 
 def formatCostsTab(worksheet, sheetInfo):
@@ -479,64 +256,63 @@ def formatCostsTab(worksheet, sheetInfo):
     worksheet['E8'].style = 'invoiceValue'
     worksheet['D9'] = 'Payment Terms:'
     worksheet['D9'].style = 'invoiceHeader'
-    worksheet['E9'] = 'Net 30'
+    worksheet['E9'] = config.data['paymentTerms']['line1']
     worksheet['E9'].style = 'invoiceValue'
 
     row = 3
-    worksheet['B' + str(row)] = 'MEC Energy Services'; row += 1
-    worksheet['B' + str(row)] = '3949 Hwy 8, Suite 110'; row += 1
-    worksheet['B' + str(row)] = 'New Town, ND 58763'; row += 1
-    worksheet['B' + str(row)] = 'TIN: 753209819'; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line1']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line2']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line3']; row += 1
+    worksheet['B' + str(row)] = config.data['address']['line4']; row += 1
 
     row += 4; toRow = row
     worksheet['A' + str(row)] = 'Bill To:'
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'IPP'; row += 1
-    worksheet['B' + str(row)] = 'Global Financial Services Center'; row += 1
-    worksheet['B' + str(row)] = 'P.O. Box 150008'; row += 1
-    worksheet['B' + str(row)] = 'ATTN: Office of Claims'; row += 1
-    worksheet['B' + str(row)] = 'Charleston, SC 29415-5008'; row += 1
-    worksheet['B' + str(row)] = 'Re: Helga Lumpkin'; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line1']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line2']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line3']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line4']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line5']; row += 1
+    worksheet['B' + str(row)] = config.data['billTo']['line6']; row += 1
 
     row += 1; instructionsRow = row
     worksheet['A' + str(row)] = 'ACH:'
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'Wells Fargo'; row += 1
+    worksheet['B' + str(row)] = config.data['ach']['bank']; row += 1
     worksheet['A' + str(row)].style = 'invoiceHeader'
-    worksheet['B' + str(row)] = 'Routing #: 121000248'; row += 1
-    worksheet['B' + str(row)] = 'Account #: 299912421028'
+    worksheet['B' + str(row)] = config.data['ach']['routing']; row += 1
+    worksheet['B' + str(row)] = config.data['ach']['account']
 
     row = toRow
     worksheet['D' + str(row)] = 'Remit To:'
     worksheet['D' + str(row)].style = 'invoiceHeader'
-    worksheet['E' + str(row)] = 'Accounts Receivable'; row += 1
-    worksheet['E' + str(row)] = 'MEC Energy Services'; row += 1
-    worksheet['E' + str(row)] = '23808 Andrew Road, Unit 3'; row += 1
-    worksheet['E' + str(row)] = 'Plainfield, IL 60585'; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line1']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line2']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line3']; row += 1
+    worksheet['E' + str(row)] = config.data['remitTo']['line4']; row += 1
 
     row = instructionsRow
     worksheet['D' + str(row)] = 'Invoice Questions:'
     worksheet['D' + str(row)].style = 'invoiceHeader'
-    worksheet['E' + str(row)] = 'Joe Santorelli'; row += 1
-    worksheet['E' + str(row)] = 'joe.santorelli@mandaree.com'; row += 1
-    worksheet['E' + str(row)] = '478.714.0070'; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line1']; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line2']; row += 1
+    worksheet['E' + str(row)] = config.data['questions']['line3']; row += 1
 
     row += 1
-    worksheet['A' + str(row)] = 'CLIN'
+    worksheet['A' + str(row)] = config.data['postHeaders']['clin']
     worksheet['A' + str(row)].style = 'summaryTitle'
-    worksheet['B' + str(row)] = 'Location'
+    worksheet['B' + str(row)] = config.data['postHeaders']['description']
     worksheet['B' + str(row)].style = 'summaryTitle'
-    worksheet['C' + str(row)] = 'Type'
+    worksheet['C' + str(row)] = config.data['postHeaders']['type']
     worksheet['C' + str(row)].style = 'summaryTitle'
-    worksheet['D' + str(row)] = 'Amount'
+    worksheet['D' + str(row)] = config.data['postHeaders']['quantity']
     worksheet['D' + str(row)].style = 'summaryTitle'
-    worksheet['E' + str(row)] = 'G&A'
+    worksheet['E' + str(row)] = config.data['postHeaders']['rate']
     worksheet['E' + str(row)].style = 'summaryTitle'
-    worksheet['F' + str(row)] = 'Total'
+    worksheet['F' + str(row)] = config.data['postHeaders']['total']
     worksheet['F' + str(row)].style = 'summaryTitle'
 
     # format the summary detail area
-
 
 def formatDetailTab(worksheet):
     worksheet.delete_cols(1, 1)
@@ -635,7 +411,7 @@ def formatPostDetails(worksheet, title, startRow, detailRows, spaceToSummary = 2
 
     worksheet.page_setup.orientation = worksheet.ORIENTATION_LANDSCAPE
 
-def formatHoursTab(worksheet, approvers=None, invoiceNumber=None, locationName=None, billingFrom=None):
+def formatHoursTab(worksheet, approvers=None, locationName=None, billingFrom=None):
     aboveRows = 3
     worksheet.insert_rows(1, aboveRows)
 
@@ -695,14 +471,9 @@ def formatHoursTab(worksheet, approvers=None, invoiceNumber=None, locationName=N
     worksheet['G' + str(signaturesRow)].value = approvers['COR']
     worksheet['G' + str(signaturesRow)].style = 'boldTextCell'
 
-    if invoiceNumber is None:
-        worksheet['G1'] = 'Invoice Date:'
-        worksheet['H1'] = processingDate
-    else:
-        worksheet['G1'] = 'Invoice Number:'
-        worksheet['H1'] = invoiceNumber
-
+    worksheet['G1'] = 'Invoice Date:'
     worksheet['G1'].style = 'invoiceHeader'
+    worksheet['H1'] = processingDate
     worksheet['H1'].style = 'invoiceValue'
 
     if locationName is not None:
@@ -756,13 +527,8 @@ def formatHoursDetailsTab(worksheet, locationName=None, invoiceNumber=None, bill
         for r in range(start - 2, stop):
             worksheet[column + str(r + 1)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
 
-    if invoiceNumber is None:
-        worksheet['G1'] = 'Invoice Date:'
-        worksheet['H1'] = processingDate
-    else:
-        worksheet['G1'] = 'Invoice Number:'
-        worksheet['H1'] = invoiceNumber
-
+    worksheet['G1'] = 'Report Date:'
+    worksheet['H1'] = processingDate
     worksheet['G1'].style = 'invoiceHeader'
     worksheet['H1'].style = 'invoiceValue'
 
@@ -839,24 +605,22 @@ def formatFullDetailsTab(worksheet):
 def formatSummaryTab(worksheet):
     worksheet.delete_cols(1, 1)
 
-    styleColumn(worksheet, 'A', 'Description')
-    styleColumn(worksheet, 'B', 'CLIN')
-    styleColumn(worksheet, 'C', 'Filename')
-    styleColumn(worksheet, 'D', 'CLIN')
-    styleColumn(worksheet, 'E', 'InvoiceNumber')
-    styleColumn(worksheet, 'F', 'TaskOrder')
-    styleColumn(worksheet, 'G', 'BillingPeriod')
-    styleColumn(worksheet, 'H', 'InvoiceAmount')
+    styleColumn(worksheet, 'A', 'Filename')
+    styleColumn(worksheet, 'B', 'Type')
+    styleColumn(worksheet, 'C', 'InvoiceNumber')
+    styleColumn(worksheet, 'D', 'TaskOrder')
+    styleColumn(worksheet, 'E', 'Total')
 
-    # create a table
-    table = Table(displayName='Detail', ref="A1:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row))
-    worksheet.add_table(table)
-    worksheet.freeze_panes = worksheet['A2']
+    for column in ['A', 'B', 'C', 'D', 'E']:
+        worksheet[column + '1'].style = 'summaryTitle'
+
+        for r in range(1, worksheet.max_row + 1):
+                worksheet[column + str(r)].border = Border(left=thinSide, top=thinSide, right=thinSide, bottom=thinSide)
 
     # add SUM() formulas
     start = 2
     stop = worksheet.max_row
-    sumColumn(worksheet, 'H', 'currency', start, stop)
+    sumColumn(worksheet, 'E', 'currency', start, stop)
 
 def formatDaysTab(worksheet):
     worksheet.insert_rows(1, 1)
@@ -1217,8 +981,6 @@ def formatJoinTab(worksheet):
             worksheet[f'B{row}'].fill = yellow
             worksheet[f'C{row}'].fill = yellow
 
-
-
 def formatTimeByDate(worksheet):
     worksheet.insert_rows(1, 1)
 
@@ -1262,7 +1024,7 @@ def formatTimeByDate(worksheet):
     sumColumn(worksheet, 'P', 'number', start, stop, top=True)
     sumColumn(worksheet, 'Q', 'number', start, stop, top=True)
 
-    for row in range(3, stop):
+    for row in range(3, stop + 1):
         if worksheet[f'D{row}'].value == "Approved":
             pass
         elif worksheet[f'D{row}'].value == "Submitted":
@@ -1274,6 +1036,11 @@ def formatTimeByDate(worksheet):
         else:
             highlightRow(worksheet, row)
 
+    # add a fill for columns that are non-billable
+    for column in ['H', 'I', 'J']:
+        for row in range(1, stop):
+            worksheet[column][row].fill = gray
+
     # add a fill for columns to show that they are are summary columns
     for column in ['O', 'P', 'Q']:
         for row in range(1, stop):
@@ -1282,10 +1049,10 @@ def formatTimeByDate(worksheet):
 def formatTimeByEmployee(worksheet):
     worksheet.insert_rows(1, 1)
 
-    styleColumn(worksheet, 'A', 'Name')
+    styleColumn(worksheet, 'A', 'City')
     styleColumn(worksheet, 'B', 'SubCLIN')
-    styleColumn(worksheet, 'C', 'State')
-    styleColumn(worksheet, 'D', 'Hours')
+    styleColumn(worksheet, 'C', 'Name')
+    styleColumn(worksheet, 'D', 'State')
     styleColumn(worksheet, 'E', 'Hours')
     styleColumn(worksheet, 'F', 'Hours')
     styleColumn(worksheet, 'G', 'Hours')
@@ -1298,6 +1065,7 @@ def formatTimeByEmployee(worksheet):
     styleColumn(worksheet, 'N', 'Hours')
     styleColumn(worksheet, 'O', 'Hours')
     styleColumn(worksheet, 'P', 'Hours')
+    styleColumn(worksheet, 'Q', 'Hours')
 
     # create a table
     table = Table(displayName=worksheet.title, ref="A2:O" + str(worksheet.max_row))
@@ -1307,7 +1075,6 @@ def formatTimeByEmployee(worksheet):
     # add SUM() formulas
     start = 3
     stop = worksheet.max_row
-    sumColumn(worksheet, 'D', 'number', start, stop, top=True)
     sumColumn(worksheet, 'E', 'number', start, stop, top=True)
     sumColumn(worksheet, 'F', 'number', start, stop, top=True)
     sumColumn(worksheet, 'G', 'number', start, stop, top=True)
@@ -1320,21 +1087,26 @@ def formatTimeByEmployee(worksheet):
     sumColumn(worksheet, 'N', 'number', start, stop, top=True)
     sumColumn(worksheet, 'O', 'number', start, stop, top=True)
     sumColumn(worksheet, 'P', 'number', start, stop, top=True)
+    sumColumn(worksheet, 'Q', 'number', start, stop, top=True)
 
-    for row in range(3, stop):
-        if worksheet[f'C{row}'].value == "Approved":
+    for row in range(3, stop + 1):
+        if worksheet[f'D{row}'].value == "Approved":
             pass
-        elif worksheet[f'C{row}'].value == "Submitted":
+        elif worksheet[f'D{row}'].value == "Submitted":
             highlightRow(worksheet, row, color=yellow)
-        elif worksheet[f'C{row}'].value == "Draft":
+        elif worksheet[f'D{row}'].value == "Draft":
             highlightRow(worksheet, row, color=gray)
-        elif worksheet[f'C{row}'].value == "Declined":
+        elif worksheet[f'D{row}'].value == "Declined":
             highlightRow(worksheet, row, color=orange)  
         else:
             highlightRow(worksheet, row)
 
-     # add a fill for columns to show that they are are summary columns
-    for column in ['N', 'O', 'P']:
+    # add a fill for columns that are non-billable
+    for column in ['H', 'I', 'J']:
+        for row in range(1, stop):
+            worksheet[column][row].fill = gray
+    # add a fill for columns to show that they are are summary columns
+    for column in ['O', 'P', 'Q']:
         for row in range(1, stop):
             worksheet[column][row].fill = lightBlue
 
